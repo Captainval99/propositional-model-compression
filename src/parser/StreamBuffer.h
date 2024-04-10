@@ -29,8 +29,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <algorithm>
 #include <string>
 
-#include "SolverTypes.h"
-
 class ParserException : public std::exception {
  public:
     explicit ParserException(const std::string& what) noexcept : m_what(what) { }
@@ -310,30 +308,6 @@ class StreamBuffer {
         }
         
         *out = result;
-        return true;
-    }
-
-    /**
-     * @brief read next clause
-     * @param out the read clause, output parameter
-     * @return true if clause was read before reaching eof, false otherwise
-     */
-    bool readClause(Cl& out) {
-        Cl clause;
-
-        if (eof() || !skipWhitespace()) return false;
-
-        while (buffer[pos] == 'p' || buffer[pos] == 'c') {
-            if (!skipLine()) return false;
-        }
-
-        int plit;
-        while (readInteger(&plit)) {
-            if (plit == 0) break;
-            clause.push_back(Lit(abs(plit), plit < 0));
-        }
-        
-        out = clause;
         return true;
     }
 };
