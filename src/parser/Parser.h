@@ -39,7 +39,7 @@ public:
 
     std::vector<int> readModel() {
         StreamBuffer reader(modelFilename);
-        std::vector<int> model;
+        std::vector<ModelVar> model;
 
         while (reader.skipWhitespace()) {
             if (*reader == 'v') {
@@ -51,7 +51,7 @@ public:
             reader.readInteger(&assignment);
 
             if (assignment != 0) {
-                model.push_back(assignment);
+                model.push_back(ModelVar(assignment));
             } else {
                 break;
             }

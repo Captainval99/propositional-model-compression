@@ -3,10 +3,16 @@
 
 #include <vector>
 
+enum Value {
+    TRUE,
+    FALSE,
+    OPEN
+};
+
 struct Var
 {
     unsigned int id;
-    enum {TRUE, FALSE, OPEN} state;
+    Value state;
     unsigned int nrPosOcc;
     unsigned int nrNegOcc;
 
@@ -25,8 +31,10 @@ struct Cl
     unsigned int nrNeg;
 };
 
-
-
-
+struct ModelVar
+{
+    unsigned int id;
+    Value assignment;
+};
 
 #endif
