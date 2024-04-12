@@ -1,6 +1,7 @@
 #ifndef SRC_PARSER_SATTYPEs_H_
 #define SRC_PARSER_SATTYPES_H_
 
+#include <stdlib.h>
 #include <vector>
 
 enum Value {
@@ -35,6 +36,15 @@ struct ModelVar
 {
     unsigned int id;
     Value assignment;
+
+    explicit ModelVar(int inputId) {
+        id = abs(inputId);
+        if (inputId < 0) {
+            assignment = FALSE;
+        } else {
+            assignment = TRUE;
+        }
+    }
 };
 
 #endif

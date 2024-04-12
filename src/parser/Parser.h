@@ -29,7 +29,7 @@ public:
 
             int literal;
             while(reader.readInteger(&literal) && literal != 0) {
-                clause.push_back(Lit(abs(literal), (literal < 0)));
+                clause.literals.push_back(Lit(abs(literal), (literal < 0)));
             }
             formula.push_back(clause);
         }
@@ -37,7 +37,7 @@ public:
         return formula;
     }
 
-    std::vector<int> readModel() {
+    std::vector<ModelVar> readModel() {
         StreamBuffer reader(modelFilename);
         std::vector<ModelVar> model;
 
