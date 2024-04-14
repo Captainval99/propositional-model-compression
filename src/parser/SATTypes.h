@@ -38,6 +38,16 @@ struct Cl
     std::vector<Lit> literals;
     unsigned int nrPos;
     unsigned int nrNeg;
+
+    void addLiteral(Lit lit) {
+        literals.push_back(lit);
+
+        if (lit.negative) {
+            nrNeg += 1;
+        } else {
+            nrPos += 1;
+        }
+    }
 };
 
 struct ModelVar

@@ -30,7 +30,7 @@ public:
 
             int literal;
             while(reader.readInteger(&literal) && literal != 0) {
-                clause.literals.push_back(Lit(abs(literal), (literal < 0)));
+                clause.addLiteral(Lit(abs(literal), (literal < 0)));
             }
             formula.push_back(clause);
         }
