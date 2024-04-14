@@ -39,6 +39,8 @@ struct Cl
     unsigned int nrPos;
     unsigned int nrNeg;
 
+    Cl() : nrPos(0), nrNeg(0) {}
+
     void addLiteral(Lit lit) {
         literals.push_back(lit);
 
