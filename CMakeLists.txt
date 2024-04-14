@@ -20,8 +20,6 @@ if(NOT libarchive_POPULATED)
   add_subdirectory(${libarchive_SOURCE_DIR} ${libarchive_BINARY_DIR})
 endif()
 
-message("Libarchive prefix: ${libarchive_SOURCE_DIR}")
-
 
 add_executable(compression src/CompressionMain.cpp)
 # Include directories for libarchive header files

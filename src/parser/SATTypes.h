@@ -17,12 +17,20 @@ struct Var
     unsigned int nrPosOcc;
     unsigned int nrNegOcc;
 
+    Var(unsigned int id) : id(id), state(OPEN) {}
+
+    bool operator<(Var var) const {
+        return id < var.id;
+    }
+
 };
 
 struct Lit
 {
     unsigned int id;
     bool negative;
+
+    Lit(unsigned int id, bool negative) : id(id), negative(negative) {}
 };
 
 struct Cl

@@ -2,6 +2,7 @@
 #define SRC_PARSER_PARSER_H_
 
 #include <vector>
+#include <algorithm>
 
 #include "StreamBuffer.h"
 #include "SATTypes.h"
@@ -59,6 +60,32 @@ public:
 
         return model;
         
+    }
+
+    std::vector<Var> readVariables() {
+        StreamBuffer reader(modelFilename);
+        std::vector<Var> variables;
+
+        while (reader.skipWhitespace()) {
+            if (*reader == 'v') {
+                reader.skip();
+            }
+
+            int assignment;
+
+            reader.readInteger(&assignment);
+
+            if (assignment != 0) {
+                variables.push_back(Var(abs(assignment)));
+            } else {
+                break;
+            }
+        }
+
+        //sort the variables by id for easier access
+        std::sort(variables.begin(), variables.end());
+
+        return variables;
     }
 };
 
