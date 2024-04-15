@@ -17,6 +17,7 @@ public:
     explicit Parser(char *formulaFilename, char *modelFilename) : formulaFilename(formulaFilename), modelFilename(modelFilename) {}
 
     std::vector<Cl> readClauses() {
+        //TODO: check for conflicts in clauses
         StreamBuffer reader(formulaFilename);
         std::vector<Cl> formula;
 
@@ -40,6 +41,7 @@ public:
     }
 
     std::deque<ModelVar> readModel() {
+        //TODO: check that no variable gets assigned more than once
         StreamBuffer reader(modelFilename);
         std::deque<ModelVar> model;
 
@@ -64,33 +66,35 @@ public:
     }
 
     std::vector<Var> readVariables() {
-        StreamBuffer reader(modelFilename);
+        StreamBuffer reader(formulaFilename);
         std::vector<Var> variables;
+        int nrVariables = 0;
 
         while (reader.skipWhitespace()) {
-            if (*reader == 'v') {
-                reader.skip();
+            if (*reader == 'c') {
+                if (!reader.skipLine()) {
+                    break;
+                }
             }
 
-            int assignment;
+            if (*reader == 'p') {
+                if (!reader.skipString("p cnf ")) {
+                    break;
+                }
 
-            reader.readInteger(&assignment);
-
-            if (assignment != 0) {
-                variables.push_back(Var(abs(assignment)));
-            } else {
+                //read the number of variables
+                reader.readInteger(&nrVariables);
                 break;
             }
         }
 
-        //sort the variables by id for easier access
-        std::sort(variables.begin(), variables.end());
+        //create vector with variables
+        for (int i = 1; i <= nrVariables; i++) {
+            variables.push_back(Var(i));
+        }
 
         return variables;
     }
 };
-
-
-
 
 #endif
