@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <deque>
 
 #include "StreamBuffer.h"
 #include "SATTypes.h"
@@ -38,9 +39,9 @@ public:
         return formula;
     }
 
-    std::vector<ModelVar> readModel() {
+    std::deque<ModelVar> readModel() {
         StreamBuffer reader(modelFilename);
-        std::vector<ModelVar> model;
+        std::deque<ModelVar> model;
 
         while (reader.skipWhitespace()) {
             if (*reader == 'v') {

@@ -1,28 +1,13 @@
-#ifndef SRC_PARSER_SATTYPEs_H_
+#ifndef SRC_PARSER_SATTYPES_H_
 #define SRC_PARSER_SATTYPES_H_
 
 #include <stdlib.h>
 #include <vector>
 
-enum Value {
-    TRUE,
+enum Assignment {
     FALSE,
+    TRUE,
     OPEN
-};
-
-struct Var
-{
-    unsigned int id;
-    Value state;
-    unsigned int nrPosOcc;
-    unsigned int nrNegOcc;
-
-    Var(unsigned int id) : id(id), state(OPEN) {}
-
-    bool operator<(Var var) const {
-        return id < var.id;
-    }
-
 };
 
 struct Lit
@@ -55,16 +40,43 @@ struct Cl
 struct ModelVar
 {
     unsigned int id;
-    Value assignment;
+    Assignment assignment;
 
     explicit ModelVar(int inputId) {
         id = abs(inputId);
         if (inputId < 0) {
-            assignment = FALSE;
+            assignment = Assignment::FALSE;
         } else {
-            assignment = TRUE;
+            assignment = Assignment::TRUE;
         }
     }
+};
+
+struct Var
+{
+    unsigned int id;
+    Assignment state;
+    unsigned int nrPosOcc;
+    unsigned int nrNegOcc;
+    std::vector<Cl*> posOccList;
+    std::vector<Cl*> negOccList; 
+
+    Var(unsigned int id) : id(id), state(Assignment::OPEN), nrPosOcc(0), nrNegOcc(0) {}
+
+    bool operator<(Var var) const {
+        return id < var.id;
+    }
+
+    void addPosClause(Cl* clause) {
+        posOccList.push_back(clause);
+        nrPosOcc += 1;
+    }
+
+    void addNegClause(Cl* clause) {
+        negOccList.push_back(clause);
+        nrNegOcc += 1;
+    }
+
 };
 
 #endif

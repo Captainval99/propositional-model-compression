@@ -29,3 +29,4 @@ target_include_directories(compression PRIVATE ${LibArchive_INCLUDE_DIRS})
 target_link_libraries(compression PRIVATE archive)
 
 target_include_directories(compression PRIVATE "src/parser")
+target_include_directories(compression PRIVATE "src/propagation")
