@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         ModelVar modelVar = compressedModel.front();
         compressedModel.pop_front();
 
-        Var propVar = variables[modelVar.id - 1];
+        Var& propVar = variables[modelVar.id - 1];
         propVar.state = modelVar.assignment;
 
         nrAssigned += 1;
@@ -52,7 +52,10 @@ int main(int argc, char** argv) {
         std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
-        nrAssigned += Propagation::propagate(clauses, variables, propVar);
+        int assigned = Propagation::propagate(clauses, variables, propVar);
+        nrAssigned += assigned;
+
+        std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
 
         std::cout << "Number of assigned Variables: " << nrAssigned << std::endl;
     }

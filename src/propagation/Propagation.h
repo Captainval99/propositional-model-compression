@@ -1,5 +1,5 @@
 #ifndef SRC_PROPAGATION_PROPAGATION_H_
-#define RC_PROPAGATION_PROPAGATION_H_
+#define SRC_PROPAGATION_PROPAGATION_H_
 
 #include <deque>
 
@@ -8,7 +8,7 @@
 
 namespace Propagation {
     
-    int propagate(std::vector<Cl>& clauses, std::vector<Var> variables, Var propagationVar) {
+    int propagate(std::vector<Cl>& clauses, std::vector<Var>& variables, Var propagationVar) {
         //queue for variables that are propagated
         std::deque<Var> propagationQueue = {propagationVar};
         //variable to count the number of assignments that are made
@@ -28,6 +28,8 @@ namespace Propagation {
             }
             //TODO: Error handling when state == OPEN
 
+            std::cout << "Propagated variable: " << var.id << ", state: " << var.state << std::endl;
+
             //iterate over occurence list and update counters
             for (Cl* clause: occList) {
                 if (var.state == TRUE) {
@@ -38,10 +40,15 @@ namespace Propagation {
 
                 //check for unit clause
                 if ((clause->nrNeg == 1 && clause->nrPos == 0) || (clause->nrNeg == 0 && clause->nrPos == 1)) {
-                    nrAssign += 1;
                     for (Lit lit: clause->literals) {
                         Var& unitVar = variables.at(lit.id -1);
-                        if (unitVar.state == OPEN) {
+
+                        if (unitVar.state == Assignment::OPEN) {
+                            //check if variable is already in queue
+                            if (std::find(propagationQueue.begin(), propagationQueue.end(), unitVar) != std::end(propagationQueue)) {
+                                break;
+                            }
+
                             if(clause->nrNeg == 1) {
                                 unitVar.state = Assignment::FALSE;
                             } else {
@@ -49,6 +56,7 @@ namespace Propagation {
                             }
 
                             propagationQueue.push_back(unitVar);
+                            nrAssign += 1;
                             break;
                         }
                     }

@@ -63,8 +63,12 @@ struct Var
 
     Var(unsigned int id) : id(id), state(Assignment::OPEN), nrPosOcc(0), nrNegOcc(0) {}
 
-    bool operator<(Var var) const {
+    bool operator< (Var var) const {
         return id < var.id;
+    }
+
+    bool operator== (Var var) const {
+        return id == var.id;
     }
 
     void addPosClause(Cl* clause) {
