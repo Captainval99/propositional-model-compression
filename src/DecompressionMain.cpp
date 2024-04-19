@@ -10,8 +10,7 @@
 int main(int argc, char** argv) {
 
     if (argc != 4) {
-        //TODO: proper error handling
-        std::cout << "invalid argument count: " << argc << std::endl;
+        throw std::runtime_error("Wrong number of arguments: " + std::to_string(argc - 1) + ", expected 3 arguments.");
     }
 
     Parser parser(argv[1], argv[2]);

@@ -16,6 +16,14 @@ struct Lit
     bool negative;
 
     Lit(unsigned int id, bool negative) : id(id), negative(negative) {}
+
+    Lit operator~ () const {
+        return Lit(id, !negative);
+    }
+
+    bool operator== (Lit lit) const {
+        return (id == lit.id) && (negative == lit.negative);
+    }
 };
 
 struct Cl
@@ -35,6 +43,10 @@ struct Cl
             nrPos += 1;
         }
     }
+
+    bool containsLiteral(Lit lit) {
+        return std::find(literals.begin(), literals.end(), lit) != literals.end();
+    }
 };
 
 struct ModelVar
@@ -49,6 +61,10 @@ struct ModelVar
         } else {
             assignment = Assignment::TRUE;
         }
+    }
+
+    bool operator== (ModelVar var) const {
+        return id == var.id;
     }
 };
 

@@ -17,7 +17,6 @@ public:
     explicit Parser(char *formulaFilename, char *modelFilename) : formulaFilename(formulaFilename), modelFilename(modelFilename) {}
 
     std::vector<Cl> readClauses() {
-        //TODO: check for conflicts in clauses
         StreamBuffer reader(formulaFilename);
         std::vector<Cl> formula;
 
@@ -32,7 +31,14 @@ public:
 
             int literal;
             while(reader.readInteger(&literal) && literal != 0) {
-                clause.addLiteral(Lit(abs(literal), (literal < 0)));
+                Lit newLit = Lit(abs(literal), (literal < 0));
+
+                //check if the inverted literal is contained in the clause in which case the clause is not satisfiable
+                if (clause.containsLiteral(~newLit)) {
+                    throw std::runtime_error("A conflicting clause was found during parsing.");
+                }
+
+                clause.addLiteral(newLit);
             }
             formula.push_back(clause);
         }
@@ -41,7 +47,6 @@ public:
     }
 
     std::deque<ModelVar> readModel() {
-        //TODO: check that no variable gets assigned more than once
         StreamBuffer reader(modelFilename);
         std::deque<ModelVar> model;
 
@@ -55,6 +60,13 @@ public:
             reader.readInteger(&assignment);
 
             if (assignment != 0) {
+                ModelVar newModelVar = ModelVar(assignment);
+
+                //check if variable is already contained in the vector to prevent multiple assignents for the same variable
+                if (std::find(model.begin(), model.end(), newModelVar) != model.end()) {
+                    throw std::runtime_error("A variable gets assigned multiple times in the model: " + std::to_string(newModelVar.id));
+                }
+
                 model.push_back(ModelVar(assignment));
             } else {
                 break;
