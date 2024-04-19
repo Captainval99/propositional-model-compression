@@ -33,10 +33,12 @@ public:
             while(reader.readInteger(&literal) && literal != 0) {
                 Lit newLit = Lit(abs(literal), (literal < 0));
 
-                //check if the inverted literal is contained in the clause in which case the clause is not satisfiable
+                //check if the inverted literal is contained in the clause in which case the clause is a tautology and can be ignored
+                /*
                 if (clause.containsLiteral(~newLit)) {
-                    throw std::runtime_error("A conflicting clause was found during parsing.");
+                    continue;
                 }
+                */
 
                 clause.addLiteral(newLit);
             }
