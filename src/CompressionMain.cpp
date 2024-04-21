@@ -5,6 +5,7 @@
 #include "Parser.h"
 #include "Propagation.h"
 #include "SATTypes.h"
+#include "Heuristics.h"
 
 
 int main(int argc, char** argv) {
@@ -35,18 +36,23 @@ int main(int argc, char** argv) {
         }
     }
 
+    std::cout << "Made it!" << std::endl;
+
+    //create Heuristic object to sort the variables using a specific heuristic
+    Heuristic* heuristic = new ParsingOrder(model);
+
     int nrAssigned = 0;
     std::vector<Var> compressedModel;
 
     while (nrAssigned < variables.size()) {
-        //get next value from the model and assign it to the variable
-        ModelVar modelVar = model.front();
-        model.pop_front();
+        //get next value from the heuristic and assign it to the variable
+        ModelVar modelVar = heuristic->getNextVar();
+
+        std::cout << modelVar.id << std::endl;
 
         //get next value if the variable is already assigned
         while (variables[modelVar.id -1].state != Assignment::OPEN) {
-            modelVar = model.front();
-            model.pop_front();
+            modelVar = heuristic->getNextVar();
         }
         
 
@@ -62,6 +68,9 @@ int main(int argc, char** argv) {
         //propagate the new assigned variable
         int assigned = Propagation::propagate(clauses, variables, propVar);
         nrAssigned += assigned;
+
+        //recalculate the heuristic values. Only does something if the heuristic is not static
+        heuristic->updateHeuristic();
 
         std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
 
