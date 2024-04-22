@@ -33,6 +33,16 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     std::cout << "Number of Variables: " << variables.size() << std::endl;
     std::cout << "Number of Clauses: " << clauses.size() << std::endl;
+    std::cout << "Size of model: " << model.size() << std::endl;
+
+    //correct the length of the variables vector if the model is bigger than the size of the variable vector
+    if (model.size() > variables.size()) {
+        int diff = model.size() - variables.size();
+        for (int i = 1; i <= diff; i++) {
+            variables.push_back(Var(variables.size() + i));
+        }
+        std::cout << "Corrected number of variables: " << variables.size() << std::endl;
+    }
 
     //build occurence list
     for (Cl& clause: clauses) {
@@ -49,7 +59,6 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     //create Heuristic object to sort the variables using a specific heuristic
     JeroslowWang::vars = variables;
-    std::cout << "heuristic variables: " << JeroslowWang::vars.size() << std::endl;
     Heuristic* heuristic = new JeroslowWang(model);
 
     int nrAssigned = 0;
@@ -73,7 +82,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         compressedModel.push_back(propVar);
 
-        //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
+        std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
         int assigned = Propagation::propagate(clauses, variables, propVar);
@@ -82,9 +91,9 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         //recalculate the heuristic values. Only does something if the heuristic is not static
         heuristic->updateHeuristic();
 
-        //std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
+        std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
 
-        //std::cout << "Number of assigned variables: " << nrAssigned << std::endl;
+        std::cout << "Number of assigned variables: " << nrAssigned << std::endl;
 
         
         //check if all clauses are already satisfied
@@ -123,6 +132,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     outputFileStream << "0";
     outputFileStream.close();
+
+    delete heuristic;
 
     CompressionInfo info(formulaFile, modelFile, outputFile, clauses.size(), model.size(), variables.size(), compressedModel.size());
     return info;

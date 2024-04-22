@@ -44,8 +44,11 @@ class ParsingOrder: public Heuristic {
 class JeroslowWang: public Heuristic {
     private:
         static bool compare (const ModelVar var1, const ModelVar var2) {
+            //std::cout << "var1: " << var1.id << ", var2: " << var2.id << std::endl;
             Var variable1 = vars[var1.id - 1];
             Var variable2 = vars[var2.id - 1];
+
+            //std::cout << "variable1: " << variable1.id << ", variable2: " << variable2.id << std::endl;
 
             double j1 = 0;
             double j2 = 0;
