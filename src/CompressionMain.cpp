@@ -48,7 +48,9 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    Heuristic* heuristic = new ParsingOrder(model);
+    JeroslowWang::vars = variables;
+    std::cout << "heuristic variables: " << JeroslowWang::vars.size() << std::endl;
+    Heuristic* heuristic = new JeroslowWang(model);
 
     int nrAssigned = 0;
     std::vector<Var> compressedModel;
@@ -137,7 +139,7 @@ int main(int argc, char** argv) {
     fs::path outputPath(argv[3]);
 
     //input is files so only one compression has to be done
-    if (fs::is_regular_file(formulaPath) && fs::is_character_file(modelPath)) {
+    if (fs::is_regular_file(formulaPath) && fs::is_regular_file(modelPath)) {
         std::cout << "Compress model: " << modelPath << std::endl;
         
         CompressionInfo info = compressModel(argv[1], argv[2], argv[3]);
