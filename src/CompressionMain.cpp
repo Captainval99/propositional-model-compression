@@ -10,10 +10,21 @@
 
 namespace fs = std::filesystem;
 
-void compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
+struct CompressionInfo {
+    const char* formulaPath;
+    const char* modelPath;
+    const char* outputPath;
 
-    
+    unsigned int formulaSize;
+    unsigned int modelSize;
+    unsigned int variablesSize;
+    unsigned int compressedModelSize;
 
+    explicit CompressionInfo(const char* formulaPath, const char* modelPath, const char* outputPath, std::size_t formulaSize, std::size_t modelSize, std::size_t variablesSize, std::size_t compressedModelSize) : 
+        formulaPath(formulaPath), modelPath(modelPath), outputPath(outputPath), formulaSize(formulaSize), modelSize(modelSize), variablesSize(variablesSize), compressedModelSize(compressedModelSize) {}
+};
+
+CompressionInfo compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     Parser parser(formulaFile, modelFile);
 
     std::vector<Cl> clauses = parser.readClauses();
@@ -60,7 +71,7 @@ void compressModel(const char* formulaFile, const char* modelFile, const char* o
 
         compressedModel.push_back(propVar);
 
-        std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
+        //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
         int assigned = Propagation::propagate(clauses, variables, propVar);
@@ -69,9 +80,9 @@ void compressModel(const char* formulaFile, const char* modelFile, const char* o
         //recalculate the heuristic values. Only does something if the heuristic is not static
         heuristic->updateHeuristic();
 
-        std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
+        //std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
 
-        std::cout << "Number of assigned variables: " << nrAssigned << std::endl;
+        //std::cout << "Number of assigned variables: " << nrAssigned << std::endl;
 
         
         //check if all clauses are already satisfied
@@ -92,7 +103,7 @@ void compressModel(const char* formulaFile, const char* modelFile, const char* o
         }
     }
 
-    std::cout << "\nSize of compressed model: " << compressedModel.size() << std::endl;
+    //std::cout << "\nSize of compressed model: " << compressedModel.size() << std::endl;
 
 
     //write the compressed model to the output file
@@ -110,6 +121,9 @@ void compressModel(const char* formulaFile, const char* modelFile, const char* o
 
     outputFileStream << "0";
     outputFileStream.close();
+
+    CompressionInfo info(formulaFile, modelFile, outputFile, clauses.size(), model.size(), variables.size(), compressedModel.size());
+    return info;
 }
 
 
@@ -124,9 +138,16 @@ int main(int argc, char** argv) {
 
     //input is files so only one compression has to be done
     if (fs::is_regular_file(formulaPath) && fs::is_character_file(modelPath)) {
-        compressModel(argv[1], argv[2], argv[3]);
+        std::cout << "Compress model: " << modelPath << std::endl;
+        
+        CompressionInfo info = compressModel(argv[1], argv[2], argv[3]);
+
+        std::cout << "Stats: " << std::endl;
+        std::cout <<  "Number of clauses: " << info.formulaSize << ", number of variables: " << info.variablesSize << ", size of model: " << info.modelSize << ", size of compressed model: " << info.compressedModelSize << std::endl;
         return 0;
     } else if (fs::is_directory(formulaPath) && fs::is_directory(modelPath) && fs::is_directory(outputPath)) {
+        std::vector<CompressionInfo> compressionStats;
+    
         //iterate over the subdirectories in the models directory
         fs::directory_iterator modelIterator(modelPath);
 
@@ -154,11 +175,33 @@ int main(int argc, char** argv) {
                     outputFile.append(modelName);
                     std::string outputFileString(outputFile);
 
-                    compressModel(instanceFileString.c_str(), modelFileString.c_str(), outputFileString.c_str());
-                    
+                    std::cout << "Compress model: " << model.path() << std::endl;
+
+                    CompressionInfo info = compressModel(instanceFileString.c_str(), modelFileString.c_str(), outputFileString.c_str());
+                    compressionStats.push_back(info);
                 }
             }
         }
+
+        float avgModelSize = 0;
+        float avgCompressedSize = 0;
+
+        std::cout << "Stats:" << std::endl;
+        for (CompressionInfo stat: compressionStats) {
+            avgModelSize += stat.modelSize;
+            avgCompressedSize += stat.compressedModelSize;
+
+            std::cout << "Number of clauses: " << stat.formulaSize << ", number of variables: " << stat.variablesSize << ", size of model: " << stat.modelSize << ", size of compressed model: " << stat.compressedModelSize << std::endl;
+        }
+
+        avgModelSize = avgModelSize / compressionStats.size();
+        avgCompressedSize = avgCompressedSize / compressionStats.size();
+
+        std::cout << "Average model size: " << avgModelSize << std::endl;
+        std::cout << "Average compressed model size: " << avgCompressedSize << std::endl;
+        std::cout << "Average compression factor: " << (avgCompressedSize / avgModelSize) << std::endl;
+
+
 
     } else {
         throw std::runtime_error("Wrong Arguments. Arguments must be either files or directories.");
