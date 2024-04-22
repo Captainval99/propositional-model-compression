@@ -28,7 +28,7 @@ namespace Propagation {
             }
             //TODO: Error handling when state == OPEN
 
-            std::cout << "Propagated variable: " << var.id << ", state: " << var.state << std::endl;
+            //std::cout << "Propagated variable: " << var.id << ", state: " << var.state << std::endl;
 
             //iterate over occurence list and update counters
             for (Cl* clause: occList) {

@@ -14,7 +14,7 @@ private:
     const char *formulaFilename;
     const char *modelFilename;
 public:
-    explicit Parser(char *formulaFilename, char *modelFilename) : formulaFilename(formulaFilename), modelFilename(modelFilename) {}
+    explicit Parser(const char *formulaFilename, const char *modelFilename) : formulaFilename(formulaFilename), modelFilename(modelFilename) {}
 
     std::vector<Cl> readClauses() {
         StreamBuffer reader(formulaFilename);
