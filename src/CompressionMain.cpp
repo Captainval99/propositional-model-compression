@@ -82,7 +82,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         compressedModel.push_back(propVar);
 
-        std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
+        //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
         int assigned = Propagation::propagate(clauses, variables, propVar);
@@ -91,9 +91,9 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         //recalculate the heuristic values. Only does something if the heuristic is not static
         heuristic->updateHeuristic();
 
-        std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
+        //std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
 
-        std::cout << "Number of assigned variables: " << nrAssigned << std::endl;
+        //std::cout << "Number of assigned variables: " << nrAssigned << std::endl;
 
         
         //check if all clauses are already satisfied
