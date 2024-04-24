@@ -58,8 +58,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    JeroslowWang::vars = variables;
-    Heuristic* heuristic = new JeroslowWang(model);
+    Heuristic* heuristic = new JeroslowWang(model, variables);
 
     int nrAssigned = 0;
     std::vector<Var> compressedModel;

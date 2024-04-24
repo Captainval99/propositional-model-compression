@@ -43,6 +43,8 @@ class ParsingOrder: public Heuristic {
 
 class JeroslowWang: public Heuristic {
     private:
+        static inline std::vector<Var> vars;
+
         static bool compare (const ModelVar var1, const ModelVar var2) {
             //std::cout << "var1: " << var1.id << ", var2: " << var2.id << std::endl;
             Var variable1 = vars[var1.id - 1];
@@ -77,9 +79,8 @@ class JeroslowWang: public Heuristic {
         }
 
     public:
-        static inline std::vector<Var> vars;
-
-        explicit JeroslowWang(std::deque<ModelVar> model) : Heuristic(model, true) {
+        explicit JeroslowWang(std::deque<ModelVar> model, std::vector<Var> variables ) : Heuristic(model, true) {
+            JeroslowWang::vars = variables;
             sortModel();
         }
 
