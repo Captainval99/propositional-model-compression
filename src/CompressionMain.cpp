@@ -212,6 +212,7 @@ int main(int argc, char** argv) {
         //print the headers
         std::cout << std::left << std::setw(36) << "Instance:" << std::setw(40) << "Model:" << std::setw(10) << "Clauses" << std::setw(10) << "Vars" << std::setw(10) << "Model" << std::setw(10) << "Compr." << std::setw(10) << "Compr." << std::endl;
         std::cout << std::left << std::setw(76) << "" << std::setw(10) << "count:" << std::setw(10) << "count:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "ratio:" << std::endl;
+        //print the values
         for (CompressionInfo stat: compressionStats) {
             avgModelSize += stat.modelSize;
             avgCompressedSize += stat.compressedModelSize;
@@ -224,10 +225,25 @@ int main(int argc, char** argv) {
         avgCompressedSize = avgCompressedSize / compressionStats.size();
         geometricMean = std::pow(geometricMean, 1.0/compressionStats.size());
 
+        //calculate the median
+        std::sort(compressionStats.begin(), compressionStats.end(), [](const CompressionInfo &a, const CompressionInfo &b){
+            return a.compressionRatio < b.compressionRatio;
+        });
+
+        std::size_t middle = compressionStats.size() / 2;
+        float median = 0;
+
+        if(compressionStats.size() % 2 != 0) {
+            median = compressionStats[middle].compressionRatio;
+        } else {
+            median = (compressionStats[middle - 1].compressionRatio + compressionStats[middle].compressionRatio) / 2.0;
+        }
+
         std::cout << "\nAverage model size: " << avgModelSize << std::endl;
         std::cout << "Average compressed model size: " << avgCompressedSize << std::endl;
         std::cout << "Average compression factor: " << (avgModelSize / avgCompressedSize) << std::endl;
         std::cout << "Geometic mean of compression ratios: " << geometricMean << std::endl;
+        std::cout << "Median od compression ratio: " << median << std::endl;
 
 
 
