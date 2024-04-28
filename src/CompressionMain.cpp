@@ -19,16 +19,21 @@ struct CompressionInfo {
     unsigned int modelSize;
     unsigned int variablesSize;
     unsigned int compressedModelSize;
+    float compressionRatio;
 
     explicit CompressionInfo(const char* formulaPath, const char* modelPath, const char* outputPath, std::size_t formulaSize, std::size_t modelSize, std::size_t variablesSize, std::size_t compressedModelSize) : 
-        formulaPath(formulaPath), modelPath(modelPath), outputPath(outputPath), formulaSize(formulaSize), modelSize(modelSize), variablesSize(variablesSize), compressedModelSize(compressedModelSize) {}
+        formulaPath(formulaPath), modelPath(modelPath), outputPath(outputPath), formulaSize(formulaSize), modelSize(modelSize), variablesSize(variablesSize), compressedModelSize(compressedModelSize) {
+            compressionRatio = modelSize / compressedModelSize;
+        }
 };
 
 CompressionInfo compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     Parser parser(formulaFile, modelFile);
 
+    std::cout << "Reading clauses" << std::endl;
     std::vector<Cl> clauses = parser.readClauses();
     std::vector<Var> variables = parser.readVariables();
+    std::cout << " Reading model" << std::endl;
     std::deque<ModelVar> model = parser.readModel();
 
     std::cout << "Number of Variables: " << variables.size() << std::endl;
@@ -58,7 +63,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    Heuristic* heuristic = new JeroslowWang(model, variables);
+    Heuristic* heuristic = new ParsingOrder(model);
 
     int nrAssigned = 0;
     std::vector<Var> compressedModel;
@@ -81,7 +86,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         compressedModel.push_back(propVar);
 
-        //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
+        std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
         int assigned = Propagation::propagate(clauses, variables, propVar);
@@ -113,7 +118,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         }
     }
 
-    //std::cout << "\nSize of compressed model: " << compressedModel.size() << std::endl;
+    std::cout << "\nSize of compressed model: " << compressedModel.size() << std::endl;
 
 
     //write the compressed model to the output file
@@ -197,21 +202,25 @@ int main(int argc, char** argv) {
 
         float avgModelSize = 0;
         float avgCompressedSize = 0;
+        double geometricMean = 1.0;
 
         std::cout << "Stats:" << std::endl;
         for (CompressionInfo stat: compressionStats) {
             avgModelSize += stat.modelSize;
             avgCompressedSize += stat.compressedModelSize;
+            geometricMean *= stat.compressionRatio;
 
             std::cout << "Number of clauses: " << stat.formulaSize << ", number of variables: " << stat.variablesSize << ", size of model: " << stat.modelSize << ", size of compressed model: " << stat.compressedModelSize << std::endl;
         }
 
         avgModelSize = avgModelSize / compressionStats.size();
         avgCompressedSize = avgCompressedSize / compressionStats.size();
+        geometricMean = std::pow(geometricMean, 1.0/compressionStats.size());
 
         std::cout << "Average model size: " << avgModelSize << std::endl;
         std::cout << "Average compressed model size: " << avgCompressedSize << std::endl;
-        std::cout << "Average compression factor: " << (avgCompressedSize / avgModelSize) << std::endl;
+        std::cout << "Average compression factor: " << (avgModelSize / avgCompressedSize) << std::endl;
+        std::cout << "Geometic mean of compression ratios: " << geometricMean << std::endl;
 
 
 
