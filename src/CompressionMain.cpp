@@ -7,30 +7,9 @@
 #include "Propagation.h"
 #include "SATTypes.h"
 #include "Heuristics.h"
+#include "Output.h"
 
 namespace fs = std::filesystem;
-
-struct CompressionInfo {
-    std::string formulaName;
-    std::string modelName;
-
-    unsigned int formulaSize;
-    unsigned int modelSize;
-    unsigned int variablesSize;
-    unsigned int compressedModelSize;
-    float compressionRatio;
-
-    explicit CompressionInfo(std::size_t formulaSize, std::size_t modelSize, std::size_t variablesSize, std::size_t compressedModelSize) : 
-                            formulaSize(formulaSize), modelSize(modelSize), variablesSize(variablesSize), compressedModelSize(compressedModelSize) {
-        compressionRatio = (float) modelSize / compressedModelSize;
-    }
-
-    void addNames(const std::string formulaName_, const std::string modelName_) {
-        formulaName = formulaName_;
-        modelName = modelName_;
-    }
-
-};
 
 CompressionInfo compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     Parser parser(formulaFile, modelFile);
@@ -68,7 +47,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    Heuristic* heuristic = new ParsingOrder(model);
+    Heuristic* heuristic = new JeroslowWang(model, variables);
 
     int nrAssigned = 0;
     std::vector<Var> compressedModel;
@@ -91,7 +70,9 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         compressedModel.push_back(propVar);
 
-        std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
+        if (propVar.id % 1000 == 0) {
+            std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
+        }
 
         //propagate the new assigned variable
         int assigned = Propagation::propagate(clauses, variables, propVar);
@@ -123,7 +104,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         }
     }
 
-    std::cout << "\nSize of compressed model: " << compressedModel.size() << std::endl;
+    std::cout << "Size of compressed model: " << compressedModel.size() << std::endl;
 
     //write the compressed model to the output file
     std::ofstream outputFileStream(outputFile);
@@ -205,45 +186,11 @@ int main(int argc, char** argv) {
             }
         }
 
-        double avgModelSize = 0;
-        double avgCompressedSize = 0;
-        double geometricMean = 1.0;
+        //print the statistics
+        StatsOutput output(compressionStats);
+        output.printStatistics();
+
         
-        //print the headers
-        std::cout << std::left << std::setw(36) << "Instance:" << std::setw(40) << "Model:" << std::setw(10) << "Clauses" << std::setw(10) << "Vars" << std::setw(10) << "Model" << std::setw(10) << "Compr." << std::setw(10) << "Compr." << std::endl;
-        std::cout << std::left << std::setw(76) << "" << std::setw(10) << "count:" << std::setw(10) << "count:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "ratio:" << std::endl;
-        //print the values
-        for (CompressionInfo stat: compressionStats) {
-            avgModelSize += stat.modelSize;
-            avgCompressedSize += stat.compressedModelSize;
-            geometricMean *= stat.compressionRatio;
-
-            std::cout << std::left << std::setw(36) << stat.formulaName << std::setw(40) << stat.modelName << std::setw(10) << stat.formulaSize << std::setw(10) << stat.variablesSize << std::setw(10) << stat.modelSize << std::setw(10) << stat.compressedModelSize << std::setw(10) << stat.compressionRatio << std::endl;
-        }
-
-        avgModelSize = avgModelSize / compressionStats.size();
-        avgCompressedSize = avgCompressedSize / compressionStats.size();
-        geometricMean = std::pow(geometricMean, 1.0/compressionStats.size());
-
-        //calculate the median
-        std::sort(compressionStats.begin(), compressionStats.end(), [](const CompressionInfo &a, const CompressionInfo &b){
-            return a.compressionRatio < b.compressionRatio;
-        });
-
-        std::size_t middle = compressionStats.size() / 2;
-        float median = 0;
-
-        if(compressionStats.size() % 2 != 0) {
-            median = compressionStats[middle].compressionRatio;
-        } else {
-            median = (compressionStats[middle - 1].compressionRatio + compressionStats[middle].compressionRatio) / 2.0;
-        }
-
-        std::cout << "\nAverage model size: " << avgModelSize << std::endl;
-        std::cout << "Average compressed model size: " << avgCompressedSize << std::endl;
-        std::cout << "Average compression factor: " << (avgModelSize / avgCompressedSize) << std::endl;
-        std::cout << "Geometic mean of compression ratios: " << geometricMean << std::endl;
-        std::cout << "Median od compression ratio: " << median << std::endl;
 
 
 

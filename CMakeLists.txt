@@ -30,6 +30,7 @@ target_link_libraries(compression PRIVATE archive)
 
 target_include_directories(compression PRIVATE "src/parser")
 target_include_directories(compression PRIVATE "src/propagation")
+target_include_directories(compression PRIVATE "src/util")
 
 add_executable(decompression src/DecompressionMain.cpp)
 # Include directories for libarchive header files
@@ -40,3 +41,4 @@ target_link_libraries(decompression PRIVATE archive)
 
 target_include_directories(decompression PRIVATE "src/parser")
 target_include_directories(decompression PRIVATE "src/propagation")
+target_include_directories(decompression PRIVATE "src/util")
