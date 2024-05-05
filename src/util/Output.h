@@ -56,12 +56,12 @@ class StatsOutput {
             });
 
             std::size_t middle = statisticsCopy.size() / 2;
-            float median = 0;
+            ratioMedian = 0;
 
             if(statisticsCopy.size() % 2 != 0) {
-                median = statisticsCopy[middle].compressionRatio;
+                ratioMedian = statisticsCopy[middle].compressionRatio;
             } else {
-                median = (statisticsCopy[middle - 1].compressionRatio + statisticsCopy[middle].compressionRatio) / 2.0;
+                ratioMedian = (statisticsCopy[middle - 1].compressionRatio + statisticsCopy[middle].compressionRatio) / 2.0;
             }
         }
 
