@@ -49,11 +49,10 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     //create Heuristic object to sort the variables using a specific heuristic
     Heuristic* heuristic = new JeroslowWang(model, variables);
 
-    int nrAssigned = 0;
     std::vector<Var> compressedModel;
     bool allSatisfied = false;
 
-    while (nrAssigned < variables.size() && !allSatisfied) {
+    while (!allSatisfied) {
         //get next value from the heuristic and assign it to the variable
         ModelVar modelVar = heuristic->getNextVar();
 
@@ -66,15 +65,12 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         Var& propVar = variables[modelVar.id - 1];
         propVar.state = modelVar.assignment;
 
-        nrAssigned += 1;
-
         compressedModel.push_back(propVar);
 
         //std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
-        int assigned = Propagation::propagate(clauses, variables, propVar);
-        nrAssigned += assigned;
+        Propagation::propagate(clauses, variables, propVar);
 
         //recalculate the heuristic values. Only does something if the heuristic is not static
         heuristic->updateHeuristic();

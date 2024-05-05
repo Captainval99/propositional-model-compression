@@ -20,6 +20,10 @@ class Heuristic {
         }
 
         ModelVar getNextVar() {
+            if (model.size() == 0) {
+                throw std::runtime_error("Error, the model is not satisfying!");
+            }
+
             ModelVar nextVar = model.front();
             model.pop_front();
             return nextVar;

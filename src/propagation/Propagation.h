@@ -8,11 +8,9 @@
 
 namespace Propagation {
     
-    int propagate(std::vector<Cl>& clauses, std::vector<Var>& variables, Var propagationVar) {
+    void propagate(std::vector<Cl>& clauses, std::vector<Var>& variables, Var propagationVar) {
         //queue for variables that are propagated
         std::deque<Var> propagationQueue = {propagationVar};
-        //variable to count the number of assignments that are made
-        int nrAssign = 0;
 
         while (!propagationQueue.empty()) {
             Var var = propagationQueue.front();
@@ -56,14 +54,12 @@ namespace Propagation {
                             }
 
                             propagationQueue.push_back(unitVar);
-                            nrAssign += 1;
                             break;
                         }
                     }
                 }
             }
         }
-        return nrAssign;
     }
 
 }

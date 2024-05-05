@@ -34,10 +34,9 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         }
     }
 
-    int nrAssigned = 0;
     bool allSatisfied = false;
 
-    while (nrAssigned < variables.size() && !allSatisfied) {
+    while (!allSatisfied) {
         //get next value from the model and assign it to the variable
         ModelVar modelVar = compressedModel.front();
         compressedModel.pop_front();
@@ -50,13 +49,10 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         Var& propVar = variables[modelVar.id - 1];
         propVar.state = modelVar.assignment;
 
-        nrAssigned += 1;
-
         //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
-        int assigned = Propagation::propagate(clauses, variables, propVar);
-        nrAssigned += assigned;
+        Propagation::propagate(clauses, variables, propVar);
 
         //std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
 
