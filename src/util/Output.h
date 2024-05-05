@@ -81,7 +81,7 @@ class StatsOutput {
             //print the general statistics
             std::cout << "\nAverage model size: " << avgModelSize << std::endl;
             std::cout << "Average compressed model size: " << avgCompressedSize << std::endl;
-            std::cout << "Geometic mean of compression ratios: " << geometricMean << std::endl;
+            std::cout << "Geometric mean of compression ratios: " << geometricMean << std::endl;
             std::cout << "Median of compression ratio: " << ratioMedian << std::endl;
         }
 
@@ -97,7 +97,7 @@ class StatsOutput {
             }
 
             //write general statistics
-            outputFile << "\nAverage model size:, " << avgModelSize << "\nAverage compressed model size:, " << avgCompressedSize << "\nGeometic mean of compression ratios:, " << geometricMean << "\nMedian of compression ratio:, " << ratioMedian;
+            outputFile << "\nAverage model size:, " << avgModelSize << "\nAverage compressed model size:, " << avgCompressedSize << "\nGeometric mean of compression ratios:, " << geometricMean << "\nMedian of compression ratio:, " << ratioMedian;
         }
 };
 
