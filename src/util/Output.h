@@ -1,6 +1,8 @@
 #ifndef SRC_UTIL_OUTPUT_H
 #define SRC_UTIL_OUTPUT_H
 
+#include <fstream>
+
 
 struct CompressionInfo {
     std::string formulaName;
@@ -81,6 +83,21 @@ class StatsOutput {
             std::cout << "Average compressed model size: " << avgCompressedSize << std::endl;
             std::cout << "Geometic mean of compression ratios: " << geometricMean << std::endl;
             std::cout << "Median of compression ratio: " << ratioMedian << std::endl;
+        }
+
+        void writeToCsv(const char* filePath) {
+            std::ofstream outputFile(filePath);
+
+            //write the headers
+            outputFile << "Instance, Model, Clauses count, Variables count, Model size, Compressed model size, Compression ratio: \n";
+
+            //write the values
+            for (CompressionInfo stat: statistics) {
+                outputFile << stat.formulaName << ", " << stat.modelName << ", " << stat.formulaSize << ", " << stat.variablesSize << ", " << stat.modelSize << ", " << stat.compressedModelSize << ", " << stat.compressionRatio << "\n";
+            }
+
+            //write general statistics
+            outputFile << "\nAverage model size:, " << avgModelSize << "\nAverage compressed model size:, " << avgCompressedSize << "\nGeometic mean of compression ratios:, " << geometricMean << "\nMedian of compression ratio:, " << ratioMedian;
         }
 };
 

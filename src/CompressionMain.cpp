@@ -70,9 +70,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         compressedModel.push_back(propVar);
 
-        if (propVar.id % 1000 == 0) {
-            std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
-        }
+        //std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
         int assigned = Propagation::propagate(clauses, variables, propVar);
@@ -190,9 +188,13 @@ int main(int argc, char** argv) {
         StatsOutput output(compressionStats);
         output.printStatistics();
 
+        //write the statistics to a csv file
+        fs::path statisticsFile = outputPath;
+        statisticsFile.append("statistics");
+        statisticsFile.replace_extension(".csv");
+        std::string statisticsFileString(statisticsFile);
         
-
-
+        output.writeToCsv(statisticsFileString.c_str());
 
     } else {
         throw std::runtime_error("Wrong Arguments. Arguments must be either files or directories.");
