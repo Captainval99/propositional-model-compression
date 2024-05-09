@@ -34,12 +34,14 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         }
     }
 
+    //create Heuristic object to sort the variables using a specific heuristic
+    Heuristic* heuristic = new JeroslowWang(compressedModel, variables);
+
     bool allSatisfied = false;
 
     while (!allSatisfied) {
         //get next value from the model and assign it to the variable
-        ModelVar modelVar = compressedModel.front();
-        compressedModel.pop_front();
+        ModelVar modelVar = heuristic->getNextVar();
 
         //check if the variable is already assigned
         if (variables[modelVar.id -1].state != Assignment::OPEN) {
@@ -101,6 +103,8 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
 
     outputFileStream << "\n";
     outputFileStream.close();
+
+    delete heuristic;
 }
 
 

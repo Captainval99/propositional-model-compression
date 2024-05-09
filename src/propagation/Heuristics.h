@@ -79,6 +79,10 @@ class JeroslowWang: public Heuristic {
                 j2 += pow(2, -clauseSize);
             }
 
+            if (j1 == j2) {
+                return var1.id < var2.id;
+            }
+
             return j1 > j2;
         }
 
