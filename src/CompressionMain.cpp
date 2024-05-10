@@ -84,14 +84,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         allSatisfied = true;
 
         for (Cl clause: clauses) {
-            bool satisfied = false;
-            for (Lit lit: clause.literals) {
-                if ((lit.negative && variables[lit.id -1].state == Assignment::FALSE) || (!lit.negative && variables[lit.id -1].state == Assignment::TRUE)) {
-                    satisfied = true;
-                    break;
-                }
-            }
-            if (!satisfied) {
+            if (clause.literals.size() != 0) {
                 allSatisfied = false;
                 break;
             }

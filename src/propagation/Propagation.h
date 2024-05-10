@@ -21,18 +21,32 @@ namespace Propagation {
 
             //choose the right occurence list
             std::vector<Cl*> occList;
+            std::vector<Cl*> satOccList;
 
             if(var.state == TRUE) {
                 occList = var.negOccList;
+                satOccList = var.posOccList;
             } else if (var.state == FALSE) {
                 occList = var.posOccList;
+                satOccList = var.negOccList;
+            } else {
+                throw std::runtime_error("Variable that is propagated has on value assigned.");
             }
-            //TODO: Error handling when state == OPEN
 
             //std::cout << "Propagated variable: " << var.id << ", state: " << var.state << std::endl;
 
+            //iterate over the clauses that are satisfied and clear them
+            for (Cl* clause: satOccList) {
+                clause->literals.clear();
+            }
+
             //iterate over occurence list and update counters
             for (Cl* clause: occList) {
+                //check if the clause is already satisfied
+                if (clause->literals.size() == 0) {
+                    continue;
+                }
+
                 if (var.state == TRUE) {
                     clause->nrNeg -= 1;
                 } else {
