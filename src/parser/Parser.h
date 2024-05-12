@@ -111,6 +111,18 @@ public:
 
         return variables;
     }
+
+    std::deque<uint64_t> readCompressedFile() {
+        StreamBuffer reader(modelFilename);
+        std::deque<uint64_t> distances;
+        uint64_t currentDistance;
+
+        while (reader.readUInt64(&currentDistance)) {
+            distances.push_back(currentDistance);
+        }
+        
+        return distances;
+    }
 };
 
 #endif
