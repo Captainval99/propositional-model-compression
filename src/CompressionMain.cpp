@@ -49,9 +49,9 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     //create Heuristic object to sort the variables using a specific heuristic
     Heuristic* heuristic = new JeroslowWang(model, variables);
 
-    std::vector<unsigned int> compresssionDistances;
+    std::vector<uint64_t> compresssionDistances;
     bool allSatisfied = false;
-    unsigned int currentDistance = 0;
+    uint64_t currentDistance = 0;
 
     while (!allSatisfied) {
         //get next value from the heuristic and assign it to the variable
