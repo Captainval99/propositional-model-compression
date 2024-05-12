@@ -35,8 +35,18 @@ namespace Propagation {
 
             //std::cout << "Propagated variable: " << var.id << ", state: " << var.state << std::endl;
 
-            //iterate over the clauses that are satisfied and clear them
+            //iterate over the clauses that are satisfied and clear them and update the counters
             for (Cl* clause: satOccList) {
+                for (Lit lit: clause->literals) {
+                    Var& satVar = variables.at(lit.id - 1);
+
+                    if(lit.negative) {
+                        satVar.nrNegOcc -= 1;
+                    } else {
+                        satVar.nrPosOcc -= 1;
+                    }
+                }
+
                 clause->literals.clear();
             }
 
