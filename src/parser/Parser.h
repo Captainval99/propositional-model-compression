@@ -48,10 +48,9 @@ public:
         return formula;
     }
 
-    std::deque<ModelVar> readModel() {
+    std::map<unsigned int, ModelVar> readModel() {
         StreamBuffer reader(modelFilename);
-        std::deque<ModelVar> model;
-        std::map<unsigned int, ModelVar> modelCopy;
+        std::map<unsigned int, ModelVar> model;
 
         while (reader.skipWhitespace()) {
             if (*reader == 'v') {
@@ -66,12 +65,11 @@ public:
                 ModelVar newModelVar = ModelVar(assignment);
 
                 //check if variable is already contained in the vector to prevent multiple assignents for the same variable
-                if (modelCopy.count(newModelVar.id)) {
+                if (model.count(newModelVar.id)) {
                     throw std::runtime_error("A variable gets assigned multiple times in the model: " + std::to_string(newModelVar.id));
                 }
 
-                model.push_back(ModelVar(assignment));
-                modelCopy.insert(std::pair<unsigned int, ModelVar>(newModelVar.id, newModelVar));
+                model.insert(std::pair<unsigned int, ModelVar>(newModelVar.id, newModelVar));
             } else {
                 break;
             }

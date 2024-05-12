@@ -18,7 +18,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     std::vector<Cl> clauses = parser.readClauses();
     std::vector<Var> variables = parser.readVariables();
     std::cout << "Reading model" << std::endl;
-    std::deque<ModelVar> model = parser.readModel();
+    std::map<unsigned int, ModelVar> model = parser.readModel();
 
     std::cout << "Number of Variables: " << variables.size() << std::endl;
     std::cout << "Number of Clauses: " << clauses.size() << std::endl;
@@ -47,7 +47,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    Heuristic* heuristic = new JeroslowWang(model, variables);
+    std::deque variablesDq(variables.begin(), variables.end());
+    Heuristic* heuristic = new JeroslowWang(variablesDq);
 
     std::vector<uint64_t> compresssionDistances;
     bool allSatisfied = false;
@@ -55,13 +56,14 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     while (!allSatisfied) {
         //get next value from the heuristic and assign it to the variable
-        ModelVar modelVar = heuristic->getNextVar();
+        Var nextVar = heuristic->getNextVar();
 
-        //get next value if the variable is already assigned
-        while (variables[modelVar.id -1].state != Assignment::OPEN) {
-            modelVar = heuristic->getNextVar();
+        //get next value if the variable is already assigned or no model value exists
+        while ((variables[nextVar.id -1].state != Assignment::OPEN) || !model.count(nextVar.id)) {
+            nextVar = heuristic->getNextVar();
         }
         
+        ModelVar modelVar = model.at(nextVar.id);
 
         Var& propVar = variables[modelVar.id - 1];
         propVar.state = modelVar.assignment;
