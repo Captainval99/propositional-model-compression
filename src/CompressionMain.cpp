@@ -17,7 +17,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     std::cout << "Reading clauses" << std::endl;
     std::vector<Cl> clauses = parser.readClauses();
     std::vector<Var> variables = parser.readVariables();
-    std::cout << " Reading model" << std::endl;
+    std::cout << "Reading model" << std::endl;
     std::deque<ModelVar> model = parser.readModel();
 
     std::cout << "Number of Variables: " << variables.size() << std::endl;
@@ -49,8 +49,9 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     //create Heuristic object to sort the variables using a specific heuristic
     Heuristic* heuristic = new JeroslowWang(model, variables);
 
-    std::vector<Var> compressedModel;
+    std::vector<unsigned int> compresssionDistances;
     bool allSatisfied = false;
+    unsigned int currentDistance = 0;
 
     while (!allSatisfied) {
         //get next value from the heuristic and assign it to the variable
@@ -65,7 +66,13 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         Var& propVar = variables[modelVar.id - 1];
         propVar.state = modelVar.assignment;
 
-        compressedModel.push_back(propVar);
+        //check if the model value matches the prediction model
+        if ((modelVar.assignment == Assignment::FALSE && propVar.nrNegOcc < propVar.nrPosOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
+            compresssionDistances.push_back(currentDistance);
+            currentDistance = 0;
+        } else {
+            currentDistance += 1;
+        }
 
         //std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
@@ -91,27 +98,30 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         }
     }
 
-    std::cout << "Size of compressed model: " << compressedModel.size() << std::endl;
+    std::cout << "Number of distances: " << compresssionDistances.size() << std::endl;
 
     //write the compressed model to the output file
     std::ofstream outputFileStream(outputFile);
 
-    outputFileStream << "v ";
+    for (int i = 0; i < compresssionDistances.size(); i++) {
+        unsigned int distance = compresssionDistances[i];
+        outputFileStream << distance;
 
-    for (Var var: compressedModel) {
-        if (var.state == Assignment::FALSE) {
-            outputFileStream << "-";
+        //check if distance is the last
+        if (i != compresssionDistances.size() - 1) {
+            outputFileStream << " ";
         }
-
-        outputFileStream << var.id << " ";
     }
 
-    outputFileStream << "0";
     outputFileStream.close();
 
     delete heuristic;
 
-    CompressionInfo info(clauses.size(), model.size(), variables.size(), compressedModel.size());
+    //get the file sizes
+    std::uintmax_t modelFileSize = fs::file_size(modelFile);
+    std::uintmax_t compressionFileSize = fs::file_size(outputFile);
+
+    CompressionInfo info(clauses.size(), model.size(), variables.size(), modelFileSize, compressionFileSize);
     return info;
 }
 
@@ -132,7 +142,8 @@ int main(int argc, char** argv) {
         CompressionInfo info = compressModel(argv[1], argv[2], argv[3]);
 
         std::cout << "Stats: " << std::endl;
-        std::cout <<  "Number of clauses: " << info.formulaSize << ", number of variables: " << info.variablesSize << ", size of model: " << info.modelSize << ", size of compressed model: " << info.compressedModelSize << std::endl;
+        std::cout <<  "Number of clauses: " << info.formulaSize << ", number of variables: " << info.variablesSize << ", size of model: " << info.modelSize
+                  << ", file size of model: " << info.modelFileSize << ", size of compressed file: " << info.compressionFileSize << ", compression ratio: " << info.compressionRatio << std::endl;
         return 0;
     } else if (fs::is_directory(formulaPath) && fs::is_directory(modelPath) && fs::is_directory(outputPath)) {
         std::vector<CompressionInfo> compressionStats;
