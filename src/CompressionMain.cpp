@@ -61,6 +61,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         //get next value if the variable is already assigned or no model value exists
         while ((variables[nextVar.id -1].state != Assignment::OPEN) || !model.count(nextVar.id)) {
             nextVar = heuristic->getNextVar();
+            currentDistance += 1;
         }
         
         ModelVar modelVar = model.at(nextVar.id);
@@ -69,7 +70,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         propVar.state = modelVar.assignment;
 
         //check if the model value matches the prediction model
-        if ((modelVar.assignment == Assignment::FALSE && propVar.nrNegOcc < propVar.nrPosOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
+        if ((modelVar.assignment == Assignment::FALSE && propVar.nrPosOcc >= propVar.nrNegOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
             compresssionDistances.push_back(currentDistance);
             currentDistance = 0;
         } else {

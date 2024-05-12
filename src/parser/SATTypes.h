@@ -97,6 +97,14 @@ struct Var
         nrNegOcc += 1;
     }
 
+    void invert() {
+        if (state == Assignment::FALSE) {
+            state = Assignment::TRUE;
+        } else if (state == Assignment::TRUE) {
+            state = Assignment::FALSE;
+        }
+    }
+
 };
 
 #endif

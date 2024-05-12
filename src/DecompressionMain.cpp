@@ -15,11 +15,11 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
 
     std::vector<Cl> clauses = parser.readClauses();
     std::vector<Var> variables = parser.readVariables();
-    std::deque<ModelVar> compressedModel = parser.readModel();
+    std::deque<uint64_t> compresssionDistances = parser.readCompressedFile();
 
     std::cout << "Number of Variables: " << variables.size() << std::endl;
     std::cout << "Number of Clauses: " << clauses.size() << std::endl;
-    std::cout << "Size of compressed Model: " << compressedModel.size() << std::endl;
+    std::cout << "Number of distances: " << compresssionDistances.size() << std::endl;
 
     //build occurence list
     for (Cl& clause: clauses) {
@@ -35,21 +35,53 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    Heuristic* heuristic = new JeroslowWang(compressedModel, variables);
+    std::deque variablesDq(variables.begin(), variables.end());
+    Heuristic* heuristic = new JeroslowWang(variablesDq);
 
     bool allSatisfied = false;
+    bool allDistancesUsed = false;
+    uint64_t currentDistance;
+    if (compresssionDistances.empty()) {
+        allDistancesUsed = true;
+    } else {
+        currentDistance = compresssionDistances.front();
+        compresssionDistances.pop_front();
+    }
 
     while (!allSatisfied) {
         //get next value from the model and assign it to the variable
-        ModelVar modelVar = heuristic->getNextVar();
+        Var nextVar = heuristic->getNextVar();
 
-        //check if the variable is already assigned
-        if (variables[modelVar.id -1].state != Assignment::OPEN) {
-            throw std::runtime_error("The chosen variable is already assigned.");
+        //get next value if the variable is already assigned
+        while (variables[nextVar.id -1].state != Assignment::OPEN) {
+            nextVar = heuristic->getNextVar();
+            if (!allDistancesUsed) {
+                currentDistance -= 1;
+            }
         }
 
-        Var& propVar = variables[modelVar.id - 1];
-        propVar.state = modelVar.assignment;
+        Var& propVar = variables[nextVar.id - 1];
+        
+        //assign the variable according to the prediciton model and invert it if necessary
+        if (propVar.nrPosOcc >= propVar.nrNegOcc) {
+            propVar.state = Assignment::TRUE;
+        } else {
+            propVar.state = Assignment::FALSE;
+        }
+
+        if (!allDistancesUsed && currentDistance == 0) {
+            propVar.invert();
+            
+            if (compresssionDistances.empty()) {
+                allDistancesUsed = true;
+            } else {
+                currentDistance = compresssionDistances.front();
+                compresssionDistances.pop_front();
+            }
+        } else if (!allDistancesUsed) {
+            currentDistance -= 1;
+        }
+
 
         //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
@@ -64,17 +96,10 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         allSatisfied = true;
 
         for (Cl clause: clauses) {
-            bool satisfied = false;
-            for (Lit lit: clause.literals) {
-                if ((lit.negative && variables[lit.id -1].state == Assignment::FALSE) || (!lit.negative && variables[lit.id -1].state == Assignment::TRUE)) {
-                    satisfied = true;
-                    break;
-                }
-            }
-            if (!satisfied) {
+            if (clause.literals.size() != 0) {
                 allSatisfied = false;
                 break;
-            }
+            }   
         }
     }
 
