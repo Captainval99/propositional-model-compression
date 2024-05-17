@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
 
         std::cout << "Stats: " << std::endl;
         std::cout <<  "Number of clauses: " << info.formulaSize << ", number of variables: " << info.variablesSize << ", size of model: " << info.modelSize
-                  << ", file size of model: " << info.modelFileSize << ", size of compressed file: " << info.compressionFileSize << ", compression ratio: " << info.compressionRatio << std::endl;
+                  << ", file size of model: " << info.modelFileSize << ", size of compressed file: " << info.compressionFileSize << ", compression ratio: " << info.compressionRatioFileSize << std::endl;
         return 0;
     } else if (fs::is_directory(formulaPath) && fs::is_directory(modelPath) && fs::is_directory(outputPath)) {
         std::vector<CompressionInfo> compressionStats;
