@@ -53,6 +53,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     std::vector<uint64_t> compresssionDistances;
     bool allSatisfied = false;
     uint64_t currentDistance = 0;
+    uint64_t nrPredictions = 0;
 
     while (!allSatisfied) {
         //get next value from the heuristic and assign it to the variable
@@ -63,6 +64,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
             nextVar = heuristic->getNextVar();
             currentDistance += 1;
         }
+        nrPredictions += 1;
         
         ModelVar modelVar = model.at(nextVar.id);
 
@@ -124,7 +126,11 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     std::uintmax_t modelFileSize = fs::file_size(modelFile);
     std::uintmax_t compressionFileSize = fs::file_size(outputFile);
 
-    CompressionInfo info(clauses.size(), model.size(), variables.size(), modelFileSize, compressionFileSize);
+    //calculate hite rate
+    float predictionHitRate = (float) compresssionDistances.size() / nrPredictions;
+    predictionHitRate = 1.0 - predictionHitRate;
+
+    CompressionInfo info(clauses.size(), model.size(), variables.size(), modelFileSize, compressionFileSize, predictionHitRate);
     return info;
 }
 
