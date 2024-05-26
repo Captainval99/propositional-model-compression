@@ -20,6 +20,8 @@ if(NOT libarchive_POPULATED)
   add_subdirectory(${libarchive_SOURCE_DIR} ${libarchive_BINARY_DIR})
 endif()
 
+#incude boost library
+find_package(Boost 1.70 REQUIRED COMPONENTS iostreams)
 
 add_executable(compression src/CompressionMain.cpp)
 # Include directories for libarchive header files
@@ -27,6 +29,7 @@ target_include_directories(compression PRIVATE ${LibArchive_INCLUDE_DIRS})
 
 # Link against the libarchive library
 target_link_libraries(compression PRIVATE archive)
+target_link_libraries(compression PRIVATE Boost::iostreams)
 
 target_include_directories(compression PRIVATE "src/parser")
 target_include_directories(compression PRIVATE "src/propagation")
@@ -36,8 +39,9 @@ add_executable(decompression src/DecompressionMain.cpp)
 # Include directories for libarchive header files
 target_include_directories(decompression PRIVATE ${LibArchive_INCLUDE_DIRS})
 
-# Link against the libarchive library
+# Link against the libraries
 target_link_libraries(decompression PRIVATE archive)
+target_link_libraries(decompression PRIVATE Boost::iostreams)
 
 target_include_directories(decompression PRIVATE "src/parser")
 target_include_directories(decompression PRIVATE "src/propagation")

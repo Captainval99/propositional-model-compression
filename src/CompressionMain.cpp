@@ -8,6 +8,7 @@
 #include "SATTypes.h"
 #include "Heuristics.h"
 #include "Output.h"
+#include "StringCompression.h"
 
 namespace fs = std::filesystem;
 
@@ -105,19 +106,24 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     std::cout << "Number of distances: " << compresssionDistances.size() << std::endl;
 
-    //write the compressed model to the output file
-    std::ofstream outputFileStream(outputFile);
+    std::string outputString;
 
     for (int i = 0; i < compresssionDistances.size(); i++) {
         unsigned int distance = compresssionDistances[i];
-        outputFileStream << distance;
+        outputString.append(std::to_string(distance));
 
         //check if distance is the last
         if (i != compresssionDistances.size() - 1) {
-            outputFileStream << " ";
+            outputString.append(" ");
         }
     }
 
+    //compress the string using zlib
+    std::string compressedOutput = StringCompression::compressString(outputString);
+
+    //write the compressed model to the output file
+    std::ofstream outputFileStream(outputFile);
+    outputFileStream << compressedOutput;
     outputFileStream.close();
 
     delete heuristic;
