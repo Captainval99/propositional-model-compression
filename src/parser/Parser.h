@@ -4,9 +4,15 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 #include "StreamBuffer.h"
 #include "SATTypes.h"
+#include "StringCompression.h"
 
 class Parser
 {
@@ -111,13 +117,30 @@ public:
     }
 
     std::deque<uint64_t> readCompressedFile() {
-        StreamBuffer reader(modelFilename);
+        //read the whole file into a string
+        std::ifstream compressedFile(modelFilename);
+        std::stringstream buffer;
+        buffer << compressedFile.rdbuf();
+        std::string compressedString = buffer.str();
+
+        //decompress the string and write the contents to a temporary file
+        std::string decompressedString = StringCompression::decompressString(compressedString);
+
+        std::ofstream temporaryFileStream("tmpModel.txt");
+        temporaryFileStream << decompressedString;
+        temporaryFileStream.close();
+
+        StreamBuffer reader("tmpModel.txt");
         std::deque<uint64_t> distances;
         uint64_t currentDistance;
 
         while (reader.readUInt64(&currentDistance)) {
             distances.push_back(currentDistance);
         }
+
+        //delete the temporary file
+        fs::path temoraryPath("tmpModel.txt");
+        fs::remove(temoraryPath);
         
         return distances;
     }

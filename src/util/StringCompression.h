@@ -1,3 +1,6 @@
+#ifndef SRC_UTIL_STRINGCOMPRESSION_H
+#define SRC_UTIL_STRINGCOMPRESSION_H
+
 #include <sstream>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
@@ -27,3 +30,5 @@ namespace StringCompression {
         return decompressed.str();
     }
 }
+
+#endif
