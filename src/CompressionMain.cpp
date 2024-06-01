@@ -9,6 +9,7 @@
 #include "Heuristics.h"
 #include "Output.h"
 #include "StringCompression.h"
+#include "BitvectorEncoding.h"
 
 namespace fs = std::filesystem;
 
@@ -51,9 +52,9 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     std::deque variablesDq(variables.begin(), variables.end());
     Heuristic* heuristic = new JeroslowWang(variablesDq);
 
-    std::vector<uint64_t> compresssionDistances;
+    std::vector<bool> bitvector;
     bool allSatisfied = false;
-    uint64_t currentDistance = 0;
+    uint64_t predictionMisses = 0;
     uint64_t nrPredictions = 0;
 
     while (!allSatisfied) {
@@ -63,7 +64,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         //get next value if the variable is already assigned or no model value exists
         while ((variables[nextVar.id -1].state != Assignment::OPEN) || !model.count(nextVar.id)) {
             nextVar = heuristic->getNextVar();
-            currentDistance += 1;
+            bitvector.push_back(true);
         }
         nrPredictions += 1;
         
@@ -74,10 +75,10 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         //check if the model value matches the prediction model
         if ((modelVar.assignment == Assignment::FALSE && propVar.nrPosOcc >= propVar.nrNegOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
-            compresssionDistances.push_back(currentDistance);
-            currentDistance = 0;
+            bitvector.push_back(false);
+            predictionMisses += 1;
         } else {
-            currentDistance += 1;
+            bitvector.push_back(true);
         }
 
         //std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
@@ -104,19 +105,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         }
     }
 
-    std::cout << "Number of distances: " << compresssionDistances.size() << std::endl;
-
-    std::string outputString;
-
-    for (int i = 0; i < compresssionDistances.size(); i++) {
-        unsigned int distance = compresssionDistances[i];
-        outputString.append(std::to_string(distance));
-
-        //check if distance is the last
-        if (i != compresssionDistances.size() - 1) {
-            outputString.append(" ");
-        }
-    }
+    std::string outputString = BitvectorEncoding::diffEncoding(bitvector);
 
     //compress the string using zlib
     std::string compressedOutput = StringCompression::compressString(outputString);
@@ -133,7 +122,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     std::uintmax_t compressionFileSize = fs::file_size(outputFile);
 
     //calculate hite rate
-    float predictionHitRate = (float) compresssionDistances.size() / nrPredictions;
+    float predictionHitRate = (float) predictionMisses / nrPredictions;
     predictionHitRate = 1.0 - predictionHitRate;
 
     CompressionInfo info(clauses.size(), model.size(), variables.size(), modelFileSize, compressionFileSize, predictionHitRate);
