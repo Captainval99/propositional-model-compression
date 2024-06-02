@@ -8,7 +8,7 @@
 #include <lz4.h>
 
 namespace StringCompression {
-    const unsigned int GOLOMB_RICE_PARAM = 4;
+    const unsigned int GOLOMB_RICE_PARAM = 2;
 
     std::string compressString(std::string input) {
         std::stringstream original;
@@ -94,9 +94,8 @@ namespace StringCompression {
                 currentByte = currentByte | (r << (8 - offset - GOLOMB_RICE_PARAM));
                 offset += GOLOMB_RICE_PARAM;
             } else {
-                currentByte = currentByte | (r >> (GOLOMB_RICE_PARAM - offset));
+                currentByte = currentByte | (r >> (GOLOMB_RICE_PARAM - (8 - offset)));
                 output.push_back(currentByte);
-                //std::cout << "pushed byte: " << unsigned(currentByte) << std::endl;
                 uint32_t remainingLength = GOLOMB_RICE_PARAM - (8 - offset);
 
                 uint32_t fullBytes = remainingLength >> 3; // remainingLenth / 8
