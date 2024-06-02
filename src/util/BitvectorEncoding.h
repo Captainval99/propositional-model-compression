@@ -16,23 +16,17 @@ namespace BitvectorEncoding {
         return output;
     }
 
-    std::string diffEncoding(std::vector<bool> bitvetor) {
-        std::string output;
-        uint64_t currentDistance = 0;
+    std::vector<uint32_t> diffEncoding(std::vector<bool> bitvetor) {
+        std::vector<uint32_t> output;
+        uint32_t currentDistance = 0;
 
         for (bool value: bitvetor) {
             if (value) {
                 currentDistance += 1;
             } else {
-                output.append(std::to_string(currentDistance));
-                output.append(" "); 
+                output.push_back(currentDistance);
                 currentDistance = 0;
             }
-        }
-
-        //remove last whitespace character
-        if (output.length() > 0) {
-            output.pop_back();
         }
 
         return output;

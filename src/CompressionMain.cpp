@@ -105,14 +105,33 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         }
     }
 
-    std::string outputString = BitvectorEncoding::diffEncoding(bitvector);
+    std::vector<uint32_t> outputEncoding = BitvectorEncoding::diffEncoding(bitvector);
+
+    /*
+
+    //convert the vector to a string
+    std::string outputString;
+    for (uint32_t value: outputEncoding) {
+        outputString.append(std::to_string(value));
+        outputString.append(" ");
+    }
+    //remove last whitespace
+    if (outputString.length() > 0) {
+        outputString.pop_back();
+    }
 
     //compress the string using zlib
     std::string compressedOutput = StringCompression::compressString(outputString);
 
+    */
+
+    //compress the output with golombRice
+    std::vector<char> compressedEncoding = StringCompression::golombRiceCompression(outputEncoding);
+
     //write the compressed model to the output file
     std::ofstream outputFileStream(outputFile);
-    outputFileStream << compressedOutput;
+    std::ostream_iterator<char> outputIterator(outputFileStream);
+    std::copy(compressedEncoding.begin(), compressedEncoding.end(), outputIterator);
     outputFileStream.close();
 
     delete heuristic;
