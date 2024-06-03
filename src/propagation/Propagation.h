@@ -9,15 +9,10 @@
 
 namespace Propagation {
     
-    void propagate(std::vector<Cl>& clauses, std::vector<Var>& variables, Var propagationVar) {
-        //queue for variables that are propagated
-        std::deque<Var> propagationQueue = {propagationVar};
-        std::unordered_set<unsigned int> propagationQueueIds = {propagationVar.id}; 
-
-        while (!propagationQueue.empty()) {
-            Var var = propagationQueue.front();
-            propagationQueue.pop_front();
-            propagationQueueIds.erase(var.id);
+    void propagate(std::vector<Cl>& clauses, std::vector<Var>& variables, std::vector<Var>& trail, int& head) {
+        while (head < trail.size()) {
+            Var var = trail[head];
+            head++;
 
             //choose the right occurence list
             std::vector<Cl*> occList;
@@ -69,19 +64,13 @@ namespace Propagation {
                         Var& unitVar = variables.at(lit.id -1);
 
                         if (unitVar.state == Assignment::OPEN) {
-                            //check if variable is already in queue
-                            if (propagationQueueIds.count(unitVar.id)) {
-                                break;
-                            }
-
                             if(clause->nrNeg == 1) {
                                 unitVar.state = Assignment::FALSE;
                             } else {
                                 unitVar.state = Assignment::TRUE;
                             }
 
-                            propagationQueue.push_back(unitVar);
-                            propagationQueueIds.insert(unitVar.id);
+                            trail.push_back(unitVar);
                             break;
                         }
                     }

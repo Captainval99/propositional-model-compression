@@ -48,6 +48,9 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         compresssionDistances.pop_front();
     }
 
+    std::vector<Var> trail;
+    int head = 0;
+
     while (!allSatisfied) {
         //get next value from the model and assign it to the variable
         Var nextVar = heuristic->getNextVar();
@@ -82,11 +85,13 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
             currentDistance -= 1;
         }
 
+        trail.push_back(propVar);
+
 
         //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
-        Propagation::propagate(clauses, variables, propVar);
+        Propagation::propagate(clauses, variables, trail, head);
 
         //std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
 

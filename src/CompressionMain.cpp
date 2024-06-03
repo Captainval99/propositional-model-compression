@@ -57,6 +57,9 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     uint64_t predictionMisses = 0;
     uint64_t nrPredictions = 0;
 
+    std::vector<Var> trail;
+    int head = 0;
+
     while (!allSatisfied) {
         //get next value from the heuristic and assign it to the variable
         Var nextVar = heuristic->getNextVar();
@@ -72,6 +75,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         Var& propVar = variables[modelVar.id - 1];
         propVar.state = modelVar.assignment;
+        trail.push_back(propVar);
 
         //check if the model value matches the prediction model
         if ((modelVar.assignment == Assignment::FALSE && propVar.nrPosOcc >= propVar.nrNegOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
@@ -84,7 +88,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         //std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
-        Propagation::propagate(clauses, variables, propVar);
+        Propagation::propagate(clauses, variables, trail, head);
 
         //recalculate the heuristic values. Only does something if the heuristic is not static
         heuristic->updateHeuristic();
