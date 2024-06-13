@@ -6,6 +6,7 @@
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <lz4.h>
+#include <math.h>
 
 namespace StringCompression {
     const unsigned int GOLOMB_RICE_PARAM = 2;
@@ -110,7 +111,88 @@ namespace StringCompression {
                 offset = remainder;
             }
         }
-        output.push_back(currentByte);
+        //set all unused bits in the last byte to 1
+        uint8_t lastByte = currentByte | (0xFF >> offset);
+        output.push_back(lastByte);
+        return output;
+    }
+
+    std::string golombRiceDecompression(std::string input) {
+        const char* inputArray = input.c_str();
+        uint32_t head = 0;
+        std::string output;
+
+        bool calculateQ;
+        uint32_t currentQ = 0;
+        uint32_t currentR = 0;
+        uint8_t offset = 0;
+        uint8_t offsetR = 0; //is needed to count how much of the remainder r was already read
+
+        while (head < input.length()) {
+            uint8_t currentByte = inputArray[head];
+
+            if (calculateQ) {
+                //fill the already processed bits with 1s and invert the byte
+                currentByte = ~(currentByte | (0xFF << (8 - offset)));
+                //find the most left unset bit uising the inverted byte
+                int position = 0;
+                while (currentByte > 0) {
+                    currentByte = currentByte >> 1;
+                    position += 1;
+                }
+                //update the Q value and check if a new byte has to be loaded
+                currentQ += 8 - position - offset;
+
+                if (position <= 1) {
+                    head += 1;
+                    offset = 0;
+
+                    if (position == 1) {
+                        calculateQ = false;
+                    }
+                } else {
+                    offset = 8 - position + 1;
+                    calculateQ = false;
+                }
+                
+            } else {
+                uint32_t lengthR = GOLOMB_RICE_PARAM - offsetR;
+                //fill the already processed bits with 0s
+                currentByte = currentByte & (0xFF >> offset);
+                //check if r lies completely in the current byte
+                if ((offset + lengthR) <= 8) {
+                    //shift to the right so that only the relevant bits remain
+                    currentByte = currentByte >> (8 - (offset + lengthR));
+                    //add the bits to the current r value
+                    currentR = (currentR << lengthR) | currentByte;
+                    //update the offsets
+                    offsetR = 0;
+                    calculateQ = true;
+                    if((offset + lengthR) == 8) {
+                        offset = 0;
+                        head += 1;
+                    } else {
+                        offset += lengthR;
+                    }
+                    //calculate and push the final value
+                    uint32_t finalValue = currentQ * std::pow(2, GOLOMB_RICE_PARAM) + currentR;
+                    output.append(std::to_string(finalValue));
+                    output.append(" ");
+                    currentQ = 0;
+                    currentR = 0;
+                } else {
+                    //r value has also to be read from the next byte
+                    uint8_t lengthR = 8 - offset;
+                    offsetR += lengthR;
+                    //add the relevant bits to the current value
+                    currentR = (currentR << lengthR) | currentByte;
+                    //update offsets
+                    offset = 0;
+                    head += 1;
+                }
+            }
+        }
+        output.pop_back();
         return output;
     }
 }

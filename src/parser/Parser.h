@@ -124,7 +124,7 @@ public:
         std::string compressedString = buffer.str();
 
         //decompress the string and write the contents to a temporary file
-        std::string decompressedString = StringCompression::decompressString(compressedString);
+        std::string decompressedString = StringCompression::golombRiceDecompression(compressedString);
 
         std::ofstream temporaryFileStream("tmpModel.txt");
         temporaryFileStream << decompressedString;
