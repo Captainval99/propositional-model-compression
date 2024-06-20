@@ -6,7 +6,7 @@
 
 namespace BitvectorEncoding {
 
-    std::string plainBitvector(std::vector<bool> bitvector) {
+    std::vector<uint32_t> plainBitvector(std::vector<bool> bitvector) {
         std::string output;
 
         for (bool value: bitvector) {
