@@ -90,4 +90,83 @@ class JeroslowWang: public Heuristic {
         }
 };
 
+class MomsFreeman: public Heuristic {
+    private:
+        static constexpr double MOMS_PARAMETER = 10.0;
+        std::vector<Cl>& clauses;
+
+
+        static bool compare(const Var variable1, const Var variable2) {
+            unsigned int posCount1 = 0;
+            unsigned int negCount1 = 0;
+            unsigned int posCount2 = 0;
+            unsigned int negCount2 = 0;
+
+            for (Cl* clause: variable1.negOccList) {
+                if (clause->literals.size() == minClauseLength) {
+                    negCount1 += 1;
+                }
+            }
+
+            for (Cl* clause: variable1.posOccList) {
+                if (clause->literals.size() == minClauseLength) {
+                    posCount1 += 1;
+                }
+            }
+
+            for (Cl* clause: variable2.negOccList) {
+                if (clause->literals.size() == minClauseLength) {
+                    negCount2 += 1;
+                }
+            }
+
+            for (Cl* clause: variable2.posOccList) {
+                if (clause->literals.size() == minClauseLength) {
+                    posCount2 += 1;
+                }
+            }
+
+            unsigned int momsValue1 = (posCount1 + negCount1) * std::pow(2, MOMS_PARAMETER) + posCount1 * negCount1;
+            unsigned int momsValue2 = (posCount2 + negCount2) * std::pow(2, MOMS_PARAMETER) + posCount2 * negCount2;
+
+            if (momsValue1 == momsValue2) {
+                return variable1.id < variable2.id;
+            }
+
+            return momsValue1 < momsValue2;
+        }
+
+        public:
+            static unsigned int minClauseLength;
+
+            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses) : Heuristic(variables, true), clauses(clauses) {
+                sortVariables();
+            }
+
+            void sortVariables() {
+                //determine the length of the shortest clause
+                minClauseLength = clauses[0].literals.size();
+
+                unsigned int i = 1;
+
+                //find the first clause that is not satisfied
+                while (minClauseLength == 0) {
+                    minClauseLength = clauses[i].literals.size();
+                    i +=1 ;
+                }
+                
+
+                while (i < clauses.size()) {
+                    unsigned int currentSize = clauses[i].literals.size();
+                    i += 1;
+
+                    if (currentSize != 0 && currentSize < minClauseLength) {
+                        minClauseLength = currentSize;
+                    }
+                }
+
+                std::sort(variables.begin(), variables.end(), compare);
+            }
+};
+
 #endif
