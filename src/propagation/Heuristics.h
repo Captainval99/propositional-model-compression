@@ -150,7 +150,7 @@ class MomsFreeman: public Heuristic {
                 unsigned int i = 1;
 
                 //find the first clause that is not satisfied
-                while (minClauseLength == 0) {
+                while (minClauseLength == 0 && i < clauses.size()) {
                     minClauseLength = clauses[i].literals.size();
                     i +=1 ;
                 }
