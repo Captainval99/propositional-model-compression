@@ -139,7 +139,7 @@ class MomsFreeman: public Heuristic {
         public:
             static unsigned int minClauseLength;
 
-            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses) : Heuristic(variables, true), clauses(clauses) {
+            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses) : Heuristic(variables, false), clauses(clauses) {
                 sortVariables();
             }
 

@@ -164,19 +164,21 @@ int main(int argc, char** argv) {
     fs::path modelPath(argv[2]);
     fs::path outputPath(argv[3]);
 
+    std::vector<CompressionInfo> compressionStats;
+
     //input is files so only one compression has to be done
     if (fs::is_regular_file(formulaPath) && fs::is_regular_file(modelPath)) {
         std::cout << "Compress model: " << modelPath << std::endl;
         
         CompressionInfo info = compressModel(argv[1], argv[2], argv[3]);
 
+        compressionStats.push_back(info);
+
         std::cout << "Stats: " << std::endl;
-        std::cout <<  "Number of clauses: " << info.formulaSize << ", number of variables: " << info.variablesSize << ", size of model: " << info.modelSize
-                  << ", file size of model: " << info.modelFileSize << ", size of compressed file: " << info.compressionFileSize << ", compression ratio: " << info.compressionRatioFileSize << std::endl;
+        StatsOutput output(compressionStats);
+        output.printStatistics();
         return 0;
     } else if (fs::is_directory(formulaPath) && fs::is_directory(modelPath) && fs::is_directory(outputPath)) {
-        std::vector<CompressionInfo> compressionStats;
-    
         //iterate over the subdirectories in the models directory
         fs::directory_iterator modelIterator(modelPath);
 
