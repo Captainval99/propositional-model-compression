@@ -4,6 +4,7 @@
 #include <deque>
 #include <algorithm>
 #include <math.h>
+#include <set>
 
 #include "SATTypes.h"
 
@@ -94,6 +95,8 @@ class MomsFreeman: public Heuristic {
     private:
         static constexpr double MOMS_PARAMETER = 10.0;
         std::vector<Cl>& clauses;
+        std::deque<Var> allVariables;
+        std::deque<Var> allVariablesSorted;
 
 
         static bool compare(const Var variable1, const Var variable2) {
@@ -133,17 +136,20 @@ class MomsFreeman: public Heuristic {
                 return variable1.id < variable2.id;
             }
 
-            return momsValue1 < momsValue2;
+            return momsValue1 > momsValue2;
         }
 
         public:
             static unsigned int minClauseLength;
 
-            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses) : Heuristic(variables, false), clauses(clauses) {
+            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses) : Heuristic(variables, false), clauses(clauses), allVariables(variables), allVariablesSorted(variables) {
                 sortVariables();
             }
 
             void sortVariables() {
+                //set for all variables that are contained in the shortest clauses
+                std::set<Var> currentVariables;
+
                 //determine the length of the shortest clause
                 minClauseLength = clauses[0].literals.size();
 
@@ -154,18 +160,40 @@ class MomsFreeman: public Heuristic {
                     minClauseLength = clauses[i].literals.size();
                     i +=1 ;
                 }
+
+                //add variables of first clause to set
+                for (Lit lit: clauses[i].literals) {
+                    Var var = allVariables[lit.id - 1];
+                    currentVariables.insert(var);
+                }
                 
 
                 while (i < clauses.size()) {
                     unsigned int currentSize = clauses[i].literals.size();
-                    i += 1;
 
                     if (currentSize != 0 && currentSize < minClauseLength) {
                         minClauseLength = currentSize;
+                        currentVariables.clear();
                     }
+
+                    //insert variables into set if clause is of mininmal length
+                    if (currentSize == minClauseLength) {
+                        for (Lit lit: clauses[i].literals) {
+                            Var var = allVariables[lit.id - 1];
+                            currentVariables.insert(var);
+                        }
+                    }
+
+                    i += 1;
                 }
 
+                //std::cout << "min length heuristic: " << minClauseLength << std::endl;
+
+                variables = std::deque(currentVariables.begin(), currentVariables.end());
+
                 std::sort(variables.begin(), variables.end(), compare);
+
+                //std::sort(allVariablesSorted.begin(), allVariablesSorted.end(), compare);
             }
 };
 
