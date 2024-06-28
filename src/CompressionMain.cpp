@@ -52,7 +52,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     //create Heuristic object to sort the variables using a specific heuristic
     std::deque variablesDq(variables.begin(), variables.end());
-    Heuristic* heuristic = new MomsFreeman(variablesDq, clauses);
+    Heuristic* heuristic = new MomsFreeman(variablesDq, clauses, false);
 
     std::vector<bool> bitvector;
     bool allSatisfied = false;

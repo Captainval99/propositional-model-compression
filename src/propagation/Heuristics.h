@@ -13,11 +13,11 @@ class Heuristic {
 
     protected:
         std::deque<Var> variables;
-        bool staticHeuristic;
+        bool dynamicHeuristic;
         virtual void sortVariables() = 0;
 
     public:
-        explicit Heuristic(std::deque<Var> variables, bool staticHeuristic) : variables(variables), staticHeuristic(staticHeuristic) {
+        explicit Heuristic(std::deque<Var> variables, bool staticHeuristic) : variables(variables), dynamicHeuristic(staticHeuristic) {
         }
 
         Var getNextVar() {
@@ -32,7 +32,7 @@ class Heuristic {
 
         void updateHeuristic() {
             //if heuristic is static it is not necessary to recalculate the heuristic
-            if (!staticHeuristic) {
+            if (dynamicHeuristic) {
                 sortVariables();
             }
         }
@@ -40,7 +40,7 @@ class Heuristic {
 
 class ParsingOrder: public Heuristic {
     public:
-        ParsingOrder(std::deque<Var> variables) : Heuristic(variables, true) {}
+        ParsingOrder(std::deque<Var> variables) : Heuristic(variables, false) {}
 
         //the list does not get sorted so the method doesn't have to be implemented
         void sortVariables() {} 
@@ -82,7 +82,7 @@ class JeroslowWang: public Heuristic {
         }
 
     public:
-        explicit JeroslowWang(std::deque<Var> variables) : Heuristic(variables, true) {
+        explicit JeroslowWang(std::deque<Var> variables) : Heuristic(variables, false) {
             sortVariables();
         }
 
@@ -142,7 +142,7 @@ class MomsFreeman: public Heuristic {
         public:
             static unsigned int minClauseLength;
 
-            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses) : Heuristic(variables, false), clauses(clauses), allVariables(variables), allVariablesSorted(variables) {
+            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses), allVariables(variables), allVariablesSorted(variables) {
                 sortVariables();
             }
 
@@ -161,11 +161,14 @@ class MomsFreeman: public Heuristic {
                     i +=1 ;
                 }
 
-                //add variables of first clause to set
-                for (Lit lit: clauses[i].literals) {
-                    Var var = allVariables[lit.id - 1];
-                    currentVariables.insert(var);
+                //add variables of first clause to set if set to dynamic
+                if (dynamicHeuristic) {
+                    for (Lit lit: clauses[i - 1].literals) {
+                        Var var = allVariables[lit.id - 1];
+                        currentVariables.insert(var);
+                    }
                 }
+                
                 
 
                 while (i < clauses.size()) {
@@ -176,8 +179,8 @@ class MomsFreeman: public Heuristic {
                         currentVariables.clear();
                     }
 
-                    //insert variables into set if clause is of mininmal length
-                    if (currentSize == minClauseLength) {
+                    //insert variables into set if clause is of mininmal length if set to dynamic
+                    if (dynamicHeuristic && currentSize == minClauseLength) {
                         for (Lit lit: clauses[i].literals) {
                             Var var = allVariables[lit.id - 1];
                             currentVariables.insert(var);
@@ -188,8 +191,9 @@ class MomsFreeman: public Heuristic {
                 }
 
                 //std::cout << "min length heuristic: " << minClauseLength << std::endl;
-
-                variables = std::deque(currentVariables.begin(), currentVariables.end());
+                if (dynamicHeuristic) {
+                    variables = std::deque(currentVariables.begin(), currentVariables.end());
+                }
 
                 std::sort(variables.begin(), variables.end(), compare);
 
