@@ -20,6 +20,8 @@ class Heuristic {
         explicit Heuristic(std::deque<Var> variables, bool staticHeuristic) : variables(variables), dynamicHeuristic(staticHeuristic) {
         }
 
+        virtual ~Heuristic() {}
+
         Var getNextVar() {
             if (variables.size() == 0) {
                 throw std::runtime_error("Error, the model is not satisfying!");
@@ -96,7 +98,6 @@ class MomsFreeman: public Heuristic {
         static constexpr double MOMS_PARAMETER = 10.0;
         std::vector<Cl>& clauses;
         std::deque<Var> allVariables;
-        std::deque<Var> allVariablesSorted;
 
 
         static bool compare(const Var variable1, const Var variable2) {
@@ -142,7 +143,7 @@ class MomsFreeman: public Heuristic {
         public:
             static unsigned int minClauseLength;
 
-            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses), allVariables(variables), allVariablesSorted(variables) {
+            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses), allVariables(variables) {
                 sortVariables();
             }
 
