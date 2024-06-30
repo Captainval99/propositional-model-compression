@@ -2,6 +2,7 @@
 #include <deque>
 #include <fstream>
 #include <filesystem>
+#include <chrono>
 
 #include "Parser.h"
 #include "Propagation.h"
@@ -16,6 +17,9 @@ namespace fs = std::filesystem;
 unsigned int MomsFreeman::minClauseLength;
 
 CompressionInfo compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
+    //set start time
+    const auto startTime = std::chrono::high_resolution_clock::now();
+
     Parser parser(formulaFile, modelFile);
 
     std::cout << "Reading clauses" << std::endl;
@@ -23,6 +27,9 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     std::vector<Var> variables = parser.readVariables();
     std::cout << "Reading model" << std::endl;
     std::map<unsigned int, ModelVar> model = parser.readModel();
+
+    //measure parsing time
+    const auto parsingTime = std::chrono::high_resolution_clock::now();
 
     std::cout << "Number of Variables: " << variables.size() << std::endl;
     std::cout << "Number of Clauses: " << clauses.size() << std::endl;
@@ -142,6 +149,13 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     delete heuristic;
 
+    //get overall execution time
+    const auto overallTime = std::chrono::high_resolution_clock::now();
+
+    //calculate durations
+    std::chrono::duration<double, std::milli> parsingDuration = parsingTime - startTime;
+    std::chrono::duration<double, std::milli> overallDuration = overallTime - startTime;
+
     //get the file sizes
     std::uintmax_t modelFileSize = fs::file_size(modelFile);
     std::uintmax_t compressionFileSize = fs::file_size(outputFile);
@@ -150,7 +164,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     float predictionHitRate = (float) predictionMisses / nrPredictions;
     predictionHitRate = 1.0 - predictionHitRate;
 
-    CompressionInfo info(clauses.size(), model.size(), variables.size(), modelFileSize, compressionFileSize, predictionHitRate);
+    CompressionInfo info(clauses.size(), model.size(), variables.size(), modelFileSize, compressionFileSize, predictionHitRate, parsingDuration.count(), overallDuration.count());
     return info;
 }
 

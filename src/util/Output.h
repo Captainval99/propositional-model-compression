@@ -16,9 +16,11 @@ struct CompressionInfo {
     float compressionRatioFileSize;
     float compressionRatioBitvector;
     float predictionHitRate;
+    double parsingTime;
+    double overallTime;
 
-    explicit CompressionInfo(std::size_t formulaSize, std::size_t modelSize, std::size_t variablesSize, std::uintmax_t modelFileSize, std::uintmax_t compressionFileSize, float predictionHitRate) : 
-                            formulaSize(formulaSize), modelSize(modelSize), variablesSize(variablesSize), modelFileSize(modelFileSize), compressionFileSize(compressionFileSize), predictionHitRate(predictionHitRate) {
+    explicit CompressionInfo(std::size_t formulaSize, std::size_t modelSize, std::size_t variablesSize, std::uintmax_t modelFileSize, std::uintmax_t compressionFileSize, float predictionHitRate, double parsingTime, double overallTime) : 
+                            formulaSize(formulaSize), modelSize(modelSize), variablesSize(variablesSize), modelFileSize(modelFileSize), compressionFileSize(compressionFileSize), predictionHitRate(predictionHitRate), parsingTime(parsingTime), overallTime(overallTime) {
         compressionRatioFileSize = (float) modelFileSize / compressionFileSize;
         unsigned int bitvectorSize = 1 + ((modelSize - 1) / 8);
         compressionRatioBitvector = (float) bitvectorSize / compressionFileSize;
@@ -42,6 +44,8 @@ class StatsOutput {
         double geometricMeanBitvector;
         double ratioMedianBitvector;
         double geometricMeanHitRate;
+        double avgParsingTime;
+        double avgOverallTime;
 
     public:
         explicit StatsOutput(const std::vector<CompressionInfo> statistics) : statistics(statistics) {
@@ -59,12 +63,16 @@ class StatsOutput {
                 geometricMeanFileSize *= std::pow(stat.compressionRatioFileSize, 1.0/statistics.size());
                 geometricMeanBitvector *= std::pow(stat.compressionRatioBitvector, 1.0/statistics.size());
                 geometricMeanHitRate *= std::pow(stat.predictionHitRate, 1.0/statistics.size());
+                avgParsingTime += stat.parsingTime;
+                avgOverallTime += stat.overallTime;
 
             }
 
             avgModelSize = avgModelSize / statistics.size();
             avgModelFileSize = avgModelFileSize / statistics.size();
             avgCompressedSize = avgCompressedSize / statistics.size();
+            avgParsingTime = avgParsingTime / statistics.size();
+            avgOverallTime = avgOverallTime / statistics.size();
 
             //calculate the median for the file size
             std::vector<CompressionInfo> statisticsCopy = statistics;
@@ -101,13 +109,13 @@ class StatsOutput {
 
         void printStatistics() {
             //print the headers
-            std::cout << std::left << std::setw(36) << "Instance:" << std::setw(40) << "Model:" << std::setw(10) << "Clauses" << std::setw(10) << "Vars" << std::setw(10) << "Model" << std::setw(10) << "File" << std::setw(10) << "Compr." << std::setw(10) << "Compr." << std::setw(10) << "Bitvec" << std::setw(10) << "Predic" << std::endl;
-            std::cout << std::left << std::setw(76) << "" << std::setw(10) << "count:" << std::setw(10) << "count:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "ratio:" << std::setw(10) << "ratio:" << std::setw(10) << "HitRt:" << std::endl;
+            std::cout << std::left << std::setw(36) << "Instance:" << std::setw(40) << "Model:" << std::setw(10) << "Clauses" << std::setw(10) << "Vars" << std::setw(10) << "Model" << std::setw(10) << "File" << std::setw(10) << "Compr." << std::setw(10) << "Compr." << std::setw(10) << "Bitvec" << std::setw(10) << "Predic" << std::setw(10) << "Pars." << std::setw(10) << "Exec." << std::endl;
+            std::cout << std::left << std::setw(76) << "" << std::setw(10) << "count:" << std::setw(10) << "count:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "ratio:" << std::setw(10) << "ratio:" << std::setw(10) << "HitRt:" << std::setw(10) << "time:" << std::setw(10) << "time:" << std::endl;
 
             //print the values
             for (CompressionInfo stat: statistics) {
                 std::cout << std::left << std::setw(36) << stat.formulaName << std::setw(40) << stat.modelName << std::setw(10) << stat.formulaSize << std::setw(10) << stat.variablesSize << std::setw(10)
-                << stat.modelSize << std::setw(10) << stat.modelFileSize << std::setw(10) << stat.compressionFileSize << std::setw(10) << stat.compressionRatioFileSize << std::setw(10) << stat.compressionRatioBitvector << std::setw(10) << stat.predictionHitRate << std::endl;
+                << stat.modelSize << std::setw(10) << stat.modelFileSize << std::setw(10) << stat.compressionFileSize << std::setw(10) << stat.compressionRatioFileSize << std::setw(10) << stat.compressionRatioBitvector << std::setw(10) << stat.predictionHitRate << std::setw(10) << stat.parsingTime << std::setw(10) << stat.overallTime << std::endl;
             }
 
             //print the general statistics
@@ -119,22 +127,26 @@ class StatsOutput {
             std::cout << "Geometric mean of compression ratios compared to a bitvector: " << geometricMeanBitvector << std::endl;
             std::cout << "Median of compression ratio compared to a bitvector: " << ratioMedianBitvector << std::endl;
             std::cout << "Geometric mean of prediction model hit rates: " << geometricMeanHitRate << std::endl;
+            std::cout << "Average parsing time per model: " << avgParsingTime << std::endl;
+            std::cout << "Average execution time per model: " << avgOverallTime << std::endl;
         }
 
         void writeToCsv(const char* filePath) {
             std::ofstream outputFile(filePath);
 
             //write the headers
-            outputFile << "Instance, Model, Clauses count, Variables count, Model variable count, Model file size, Compressed file size, Compression ratio file sizes, Compression ratio bitvector, Prediction model hit rate\n";
+            outputFile << "Instance, Model, Clauses count, Variables count, Model variable count, Model file size, Compressed file size, Compression ratio file sizes, Compression ratio bitvector, Prediction model hit rate, Parsing time, Execution time\n";
 
             //write the values
             for (CompressionInfo stat: statistics) {
-                outputFile << stat.formulaName << ", " << stat.modelName << ", " << stat.formulaSize << ", " << stat.variablesSize << ", " << stat.modelSize << ", " << stat.modelFileSize << ", " << stat.compressionFileSize << ", " << stat.compressionRatioFileSize << ", " << stat.compressionRatioBitvector << ", " << stat.predictionHitRate << "\n";
+                outputFile << stat.formulaName << ", " << stat.modelName << ", " << stat.formulaSize << ", " << stat.variablesSize << ", " << stat.modelSize << ", " << stat.modelFileSize << ", " << stat.compressionFileSize << ", " << stat.compressionRatioFileSize << ", " << stat.compressionRatioBitvector << ", " << stat.predictionHitRate
+                           << ", " << stat.parsingTime << ", " << stat.overallTime << "\n";
             }
 
             //write general statistics
             outputFile << "\nAverage model file size:, " << avgModelFileSize << "\nAverage compressed file size:, " << avgCompressedSize << "\nGeometric mean of compression ratios with file sizes:, " << geometricMeanFileSize << "\nMedian of compression ratio with file sizes:, " << ratioMedianFileSize
-                       << "\nGeometric mean of compression ratios compared to a bitvector:, " << geometricMeanBitvector << "\nMedian of compression ratio compared to a bitvector:, " << ratioMedianBitvector << "\nGeometric mean of prediction model hit rates:, " << geometricMeanHitRate;
+                       << "\nGeometric mean of compression ratios compared to a bitvector:, " << geometricMeanBitvector << "\nMedian of compression ratio compared to a bitvector:, " << ratioMedianBitvector << "\nGeometric mean of prediction model hit rates:, " << geometricMeanHitRate
+                       << "\nAverage parsing time per model:, " << avgParsingTime << "\nAverage execution time per model:, " << avgOverallTime;
         }
 };
 
