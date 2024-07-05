@@ -99,39 +99,31 @@ class MomsFreeman: public Heuristic {
         std::vector<Cl>& clauses;
         std::deque<Var> allVariables;
 
+        void calculateHeuristicValue(Var variable) {
+            unsigned int posCount = 0;
+            unsigned int negCount = 0;
+
+            for (Cl* clause: variable.negOccList) {
+                if (clause->literals.size() == minClauseLength) {
+                    negCount += 1;
+                }
+            }
+
+            for (Cl* clause: variable.posOccList) {
+                if (clause->literals.size() == minClauseLength) {
+                    posCount += 1;
+                }
+            }
+
+            unsigned int heuristicValue = (posCount + negCount) * std::pow(2, MOMS_PARAMETER) + posCount * negCount;
+
+            heuristicValues[variable.id - 1] = heuristicValue;
+
+        }
 
         static bool compare(const Var variable1, const Var variable2) {
-            unsigned int posCount1 = 0;
-            unsigned int negCount1 = 0;
-            unsigned int posCount2 = 0;
-            unsigned int negCount2 = 0;
-
-            for (Cl* clause: variable1.negOccList) {
-                if (clause->literals.size() == minClauseLength) {
-                    negCount1 += 1;
-                }
-            }
-
-            for (Cl* clause: variable1.posOccList) {
-                if (clause->literals.size() == minClauseLength) {
-                    posCount1 += 1;
-                }
-            }
-
-            for (Cl* clause: variable2.negOccList) {
-                if (clause->literals.size() == minClauseLength) {
-                    negCount2 += 1;
-                }
-            }
-
-            for (Cl* clause: variable2.posOccList) {
-                if (clause->literals.size() == minClauseLength) {
-                    posCount2 += 1;
-                }
-            }
-
-            unsigned int momsValue1 = (posCount1 + negCount1) * std::pow(2, MOMS_PARAMETER) + posCount1 * negCount1;
-            unsigned int momsValue2 = (posCount2 + negCount2) * std::pow(2, MOMS_PARAMETER) + posCount2 * negCount2;
+            unsigned int momsValue1 = heuristicValues[variable1.id - 1];
+            unsigned int momsValue2 = heuristicValues[variable2.id - 1];
 
             if (momsValue1 == momsValue2) {
                 return variable1.id < variable2.id;
@@ -142,8 +134,10 @@ class MomsFreeman: public Heuristic {
 
         public:
             static unsigned int minClauseLength;
+            static std::vector<unsigned int> heuristicValues; 
 
             explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses), allVariables(variables) {
+                heuristicValues = std::vector<unsigned int>(variables.size(), 0);
                 sortVariables();
             }
 
@@ -162,16 +156,12 @@ class MomsFreeman: public Heuristic {
                     i +=1 ;
                 }
 
-                //add variables of first clause to set if set to dynamic
-                if (dynamicHeuristic) {
-                    for (Lit lit: clauses[i - 1].literals) {
+                //add variables of first clause to set 
+                for (Lit lit: clauses[i - 1].literals) {
                         Var var = allVariables[lit.id - 1];
                         currentVariables.insert(var);
                     }
-                }
                 
-                
-
                 while (i < clauses.size()) {
                     unsigned int currentSize = clauses[i].literals.size();
 
@@ -180,8 +170,8 @@ class MomsFreeman: public Heuristic {
                         currentVariables.clear();
                     }
 
-                    //insert variables into set if clause is of mininmal length if set to dynamic
-                    if (dynamicHeuristic && currentSize == minClauseLength) {
+                    //insert variables into set if clause is of mininmal length
+                    if (currentSize == minClauseLength) {
                         for (Lit lit: clauses[i].literals) {
                             Var var = allVariables[lit.id - 1];
                             currentVariables.insert(var);
@@ -191,14 +181,16 @@ class MomsFreeman: public Heuristic {
                     i += 1;
                 }
 
+                for (Var var: currentVariables) {
+                    calculateHeuristicValue(var);
+                }
+
                 //std::cout << "min length heuristic: " << minClauseLength << std::endl;
                 if (dynamicHeuristic) {
                     variables = std::deque(currentVariables.begin(), currentVariables.end());
                 }
 
                 std::sort(variables.begin(), variables.end(), compare);
-
-                //std::sort(allVariablesSorted.begin(), allVariablesSorted.end(), compare);
             }
 };
 

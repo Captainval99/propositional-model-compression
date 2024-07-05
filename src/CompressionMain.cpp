@@ -15,6 +15,7 @@
 namespace fs = std::filesystem;
 
 unsigned int MomsFreeman::minClauseLength;
+std::vector<unsigned int> MomsFreeman::heuristicValues;
 
 CompressionInfo compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     //set start time
@@ -59,8 +60,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     //create Heuristic object to sort the variables using a specific heuristic
     std::deque variablesDq(variables.begin(), variables.end());
-    Heuristic* heuristic = new MomsFreeman(variablesDq, clauses, false);
-
+    Heuristic* heuristic = new MomsFreeman(variablesDq, clauses, true);
+    //Heuristic* heuristic = new JeroslowWang(variablesDq);
     std::vector<bool> bitvector;
     bool allSatisfied = false;
     uint64_t predictionMisses = 0;
