@@ -56,6 +56,8 @@ class StatsOutput {
             geometricMeanFileSize = 1.0;
             geometricMeanBitvector = 1.0;
             geometricMeanHitRate = 1.0;
+            avgParsingTime = 0;
+            avgOverallTime = 0;
             for (CompressionInfo stat: statistics) {
                 avgModelSize += stat.modelSize;
                 avgModelFileSize += stat.modelFileSize;

@@ -17,7 +17,10 @@ class Heuristic {
         virtual void sortVariables() = 0;
 
     public:
-        explicit Heuristic(std::deque<Var> variables, bool staticHeuristic) : variables(variables), dynamicHeuristic(staticHeuristic) {
+        explicit Heuristic(std::deque<Var> variables_, bool dynamicHeuristic) : dynamicHeuristic(dynamicHeuristic) {
+            if (!dynamicHeuristic) {
+                variables = variables_;
+            }
         }
 
         virtual ~Heuristic() {}
@@ -97,7 +100,7 @@ class MomsFreeman: public Heuristic {
     private:
         static constexpr double MOMS_PARAMETER = 10.0;
         std::vector<Cl>& clauses;
-        std::vector<Var> currentVariables;
+        std::vector<bool> currentVariables;
         std::deque<Var> allVariables;
 
         void calculateHeuristicValue(Var variable) {
@@ -139,29 +142,29 @@ class MomsFreeman: public Heuristic {
 
             explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses), allVariables(variables) {
                 heuristicValues = std::vector<unsigned int>(variables.size(), 0);
+                currentVariables = std::vector<bool>(variables.size(), false);
+                
                 sortVariables();
             }
 
             void sortVariables() {
                 //check if there are still variables that are still unasigned in the current variables list
                 unsigned int i = 0;
-                //std::cout << "before size: " << currentVariables.size() << std::endl;
-                while (i < currentVariables.size()) {
-                    Var var = currentVariables[i];
+                while (i < variables.size()) {
+                    Var var = variables[i];
                     calculateHeuristicValue(var);
                     //heuristic value is 0 when the variable isn't contained in any clauses with minimal size
                     if (heuristicValues[var.id - 1] == 0) {
-                        currentVariables.erase(currentVariables.begin() + i);
+                        variables.erase(variables.begin() + i);
+                        currentVariables[var.id - 1] = false;
                     } else {
                         i += 1;
                     }
                 }
-                //std::cout << "after size: " << currentVariables.size() << std::endl;  
+                //std::cout << "variables empty: " << variables.empty() << currentVariables.size() << std::endl;  
 
                 //if there are no variables left in the set the minimum length and heuristic values have to be recalculated
-                if (currentVariables.empty()) {
-                    //create a new set to avoid duplicates
-                    std::set<Var> currentVariablesSet;
+                if (variables.empty()) {
                     //determine the length of the shortest clause
                     minClauseLength = clauses[0].literals.size();
 
@@ -175,9 +178,12 @@ class MomsFreeman: public Heuristic {
 
                     //add variables of first clause to set 
                     for (Lit lit: clauses[i - 1].literals) {
-                            Var var = allVariables[lit.id - 1];
-                            currentVariablesSet.insert(var);
+                        Var var = allVariables[lit.id - 1];
+                        if (!currentVariables[var.id - 1]) {
+                            variables.push_back(var);
+                            currentVariables[var.id - 1] = true;
                         }
+                    }
                     
                     while (i < clauses.size()) {
                         unsigned int currentSize = clauses[i].literals.size();
@@ -185,28 +191,32 @@ class MomsFreeman: public Heuristic {
                         if (currentSize != 0 && currentSize < minClauseLength) {
                             minClauseLength = currentSize;
                             currentVariables.clear();
+                            currentVariables.resize(allVariables.size());
+                            variables.clear();
                         }
-
+                        
                         //insert variables into set if clause is of mininmal length
                         if (currentSize == minClauseLength) {
                             for (Lit lit: clauses[i].literals) {
+                                //std::cout << "lit id: " << lit.id << ", allVars size: " << allVariables.size() << std::endl;
                                 Var var = allVariables[lit.id - 1];
-                                currentVariablesSet.insert(var);
+                                if (!currentVariables[var.id - 1]) {
+                                    variables.push_back(var);
+                                    currentVariables[var.id - 1] = true;
+                                }
                             }
                         }
 
                         i += 1;
                     }
 
-                    currentVariables = std::vector<Var>(currentVariablesSet.begin(), currentVariablesSet.end());
-
-                    for (Var var: currentVariables) {
+                    for (Var var: variables) {
                         calculateHeuristicValue(var);
                     }
                 }
                 //std::cout << "min length heuristic: " << minClauseLength << std::endl;
-                if (dynamicHeuristic) {
-                    variables = std::deque(currentVariables.begin(), currentVariables.end());
+                if (!dynamicHeuristic) {
+                    variables = std::deque(allVariables.begin(), allVariables.end());
                 }
 
                 std::sort(variables.begin(), variables.end(), compare);
