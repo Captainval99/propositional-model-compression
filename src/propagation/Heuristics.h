@@ -17,10 +17,7 @@ class Heuristic {
         virtual void sortVariables() = 0;
 
     public:
-        explicit Heuristic(std::deque<Var> variables_, bool dynamicHeuristic) : dynamicHeuristic(dynamicHeuristic) {
-            if (!dynamicHeuristic) {
-                variables = variables_;
-            }
+        explicit Heuristic(std::deque<Var> variables, bool dynamicHeuristic) : variables(variables), dynamicHeuristic(dynamicHeuristic) {
         }
 
         virtual ~Heuristic() {}
@@ -140,7 +137,7 @@ class MomsFreeman: public Heuristic {
             static unsigned int minClauseLength;
             static std::vector<unsigned int> heuristicValues; 
 
-            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses), allVariables(variables) {
+            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(std::deque<Var>(), dynamic), clauses(clauses), allVariables(variables) {
                 heuristicValues = std::vector<unsigned int>(variables.size(), 0);
                 currentVariables = std::vector<bool>(variables.size(), false);
                 
@@ -148,6 +145,7 @@ class MomsFreeman: public Heuristic {
             }
 
             void sortVariables() {
+                std::cout << "Size: " << variables.size() << std::endl;
                 //check if there are still variables that are still unasigned in the current variables list
                 unsigned int i = 0;
                 while (i < variables.size()) {
