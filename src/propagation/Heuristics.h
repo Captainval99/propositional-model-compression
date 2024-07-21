@@ -57,23 +57,31 @@ class JeroslowWang: public Heuristic {
             double j2 = 0;
 
             for (Cl* clause: variable1.negOccList) {
-                double clauseSize = static_cast<double>(clause->literals.size());
-                j1 += pow(2, -clauseSize);
+                if (clause->literals.size() > 0) {
+                    double clauseSize = static_cast<double>(clause->literals.size());
+                    j1 += pow(2, -clauseSize);
+                }
             }
 
             for (Cl* clause: variable1.posOccList) {
-                double clauseSize = static_cast<double>(clause->literals.size());
-                j1 += pow(2, -clauseSize);
+                if (clause->literals.size() > 0) {
+                    double clauseSize = static_cast<double>(clause->literals.size());
+                    j1 += pow(2, -clauseSize);
+                }
             }
 
             for (Cl* clause: variable2.negOccList) {
-                double clauseSize = static_cast<double>(clause->literals.size());
-                j2 += pow(2, -clauseSize);
+                if (clause->literals.size() > 0) {
+                    double clauseSize = static_cast<double>(clause->literals.size());
+                    j2 += pow(2, -clauseSize);
+                }
             }
 
             for (Cl* clause: variable2.posOccList) {
-                double clauseSize = static_cast<double>(clause->literals.size());
-                j2 += pow(2, -clauseSize);
+                if (clause->literals.size() > 0) {
+                    double clauseSize = static_cast<double>(clause->literals.size());
+                    j2 += pow(2, -clauseSize);
+                }
             }
 
             if (j1 == j2) {
@@ -84,7 +92,7 @@ class JeroslowWang: public Heuristic {
         }
 
     public:
-        explicit JeroslowWang(std::deque<Var> variables) : Heuristic(variables, false) {
+        explicit JeroslowWang(std::deque<Var> variables, bool dynamic) : Heuristic(variables, dynamic) {
             sortVariables();
         }
 

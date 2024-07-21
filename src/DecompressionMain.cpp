@@ -36,7 +36,7 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
 
     //create Heuristic object to sort the variables using a specific heuristic
     std::deque variablesDq(variables.begin(), variables.end());
-    Heuristic* heuristic = new JeroslowWang(variablesDq);
+    Heuristic* heuristic = new JeroslowWang(variablesDq, false);
 
     bool allSatisfied = false;
     bool allDistancesUsed = false;
