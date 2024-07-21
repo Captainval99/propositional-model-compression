@@ -17,6 +17,8 @@ namespace fs = std::filesystem;
 unsigned int MomsFreeman::minClauseLength;
 std::vector<unsigned int> MomsFreeman::heuristicValues;
 
+static const unsigned int PREDICTION_FLIP_VALUE = 5;
+
 CompressionInfo compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     //set start time
     const auto startTime = std::chrono::high_resolution_clock::now();
@@ -61,11 +63,12 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     //create Heuristic object to sort the variables using a specific heuristic
     std::deque variablesDq(variables.begin(), variables.end());
     //Heuristic* heuristic = new MomsFreeman(variablesDq, clauses, true);
-    Heuristic* heuristic = new JeroslowWang(variablesDq, true);
+    Heuristic* heuristic = new JeroslowWang(variablesDq, false);
     std::vector<bool> bitvector;
     bool allSatisfied = false;
     uint64_t predictionMisses = 0;
     uint64_t nrPredictions = 0;
+    bool flipPredictionModel = false;
 
     std::vector<Var> trail;
     int head = 0;
@@ -79,6 +82,12 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
             nextVar = heuristic->getNextVar();
             bitvector.push_back(true);
         }
+
+        //check if the prediction model has to be flipped
+        if (nrPredictions == predictionMisses == PREDICTION_FLIP_VALUE) {
+            flipPredictionModel = true;
+        }
+
         nrPredictions += 1;
         
         ModelVar modelVar = model.at(nextVar.id);
@@ -89,10 +98,15 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         //check if the model value matches the prediction model
         if ((modelVar.assignment == Assignment::FALSE && propVar.nrPosOcc >= propVar.nrNegOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
-            bitvector.push_back(false);
-            predictionMisses += 1;
+            bitvector.push_back(false != flipPredictionModel);
+            if (!flipPredictionModel) {
+                predictionMisses += 1;
+            } 
         } else {
-            bitvector.push_back(true);
+            bitvector.push_back(true != flipPredictionModel);
+            if (flipPredictionModel) {
+                predictionMisses += 1;
+            }
         }
 
         //std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
@@ -118,6 +132,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
             }
         }
     }
+
+    std::cout << "prediction flip: " << flipPredictionModel << std::endl; 
 
     std::vector<uint32_t> outputEncoding = BitvectorEncoding::diffEncoding(bitvector);
 
