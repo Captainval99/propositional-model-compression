@@ -17,7 +17,7 @@ namespace fs = std::filesystem;
 unsigned int MomsFreeman::minClauseLength;
 std::vector<unsigned int> MomsFreeman::heuristicValues;
 
-static const unsigned int PREDICTION_FLIP_VALUE = 5;
+static const unsigned int PREDICTION_FLIP_VALUE = 25;
 
 CompressionInfo compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     //set start time
@@ -68,6 +68,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     bool allSatisfied = false;
     uint64_t predictionMisses = 0;
     uint64_t nrPredictions = 0;
+    uint64_t predictionDistance = 0;
     bool flipPredictionModel = false;
 
     std::vector<Var> trail;
@@ -84,7 +85,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         }
 
         //check if the prediction model has to be flipped
-        if (nrPredictions == predictionMisses == PREDICTION_FLIP_VALUE) {
+        if (predictionDistance == PREDICTION_FLIP_VALUE) {
             flipPredictionModel = true;
         }
 
@@ -99,11 +100,13 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         //check if the model value matches the prediction model
         if ((modelVar.assignment == Assignment::FALSE && propVar.nrPosOcc >= propVar.nrNegOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
             bitvector.push_back(false != flipPredictionModel);
+            predictionDistance += 1;
             if (!flipPredictionModel) {
                 predictionMisses += 1;
             } 
         } else {
             bitvector.push_back(true != flipPredictionModel);
+            predictionDistance = 0;
             if (flipPredictionModel) {
                 predictionMisses += 1;
             }
