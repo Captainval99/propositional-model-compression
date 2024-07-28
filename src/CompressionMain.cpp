@@ -17,7 +17,7 @@ namespace fs = std::filesystem;
 unsigned int MomsFreeman::minClauseLength;
 std::vector<unsigned int> MomsFreeman::heuristicValues;
 
-static const unsigned int PREDICTION_FLIP_VALUE = 25;
+static const unsigned int PREDICTION_FLIP_VALUE = 30;
 
 CompressionInfo compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     //set start time
@@ -100,15 +100,20 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         //check if the model value matches the prediction model
         if ((modelVar.assignment == Assignment::FALSE && propVar.nrPosOcc >= propVar.nrNegOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
             bitvector.push_back(false != flipPredictionModel);
-            predictionDistance += 1;
             if (!flipPredictionModel) {
+                predictionDistance += 1;
                 predictionMisses += 1;
-            } 
+            } else {
+                predictionDistance = 0;
+            }
         } else {
             bitvector.push_back(true != flipPredictionModel);
-            predictionDistance = 0;
+            
             if (flipPredictionModel) {
                 predictionMisses += 1;
+                predictionDistance += 1;
+            } else {
+                predictionDistance = 0;
             }
         }
 
