@@ -16,6 +16,7 @@ namespace fs = std::filesystem;
 
 unsigned int MomsFreeman::minClauseLength;
 std::vector<unsigned int> MomsFreeman::heuristicValues;
+std::vector<double> JeroslowWang::heuristicValues; 
 
 static const unsigned int PREDICTION_FLIP_VALUE = 30;
 
@@ -117,7 +118,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
             }
         }
 
-        //std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
+        std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
         Propagation::propagate(clauses, variables, trail, head, heuristic);

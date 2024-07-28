@@ -53,10 +53,10 @@ class ParsingOrder: public Heuristic {
 class JeroslowWang: public Heuristic {
     private:
         static bool compare (const Var variable1, const Var variable2) {
-            //std::cout << "variable1: " << variable1.id << ", variable2: " << variable2.id << std::endl;
+            double heuristicValue1 = heuristicValues[variable1.id - 1];
+            double heuristicValue2 = heuristicValues[variable2.id - 1];
 
-            double heuristicValue1 = variable1.heuristicValue;
-            double heuristicValue2 = variable2.heuristicValue;
+            //std::cout << "variable1: " << variable1.id << ", variable2: " << variable2.id << ", value1: " << heuristicValue1 << ", value2: " << heuristicValue2 << std::endl;
 
             if (heuristicValue1 == heuristicValue2) {
                 return variable1.id < variable2.id;
@@ -66,7 +66,12 @@ class JeroslowWang: public Heuristic {
         }
 
     public:
-        explicit JeroslowWang(std::deque<Var> variables, bool dynamic) : Heuristic(variables, dynamic) {
+        static std::vector<double> heuristicValues; 
+
+        explicit JeroslowWang(std::deque<Var> variables_, bool dynamic) : Heuristic(variables_, dynamic) {
+            std::cout << "Constructor" << std::endl;
+            heuristicValues = std::vector<double>(variables.size(), 0);
+
             for (Var var: variables) {
                 double heuristicValue = 0;
 
@@ -84,10 +89,16 @@ class JeroslowWang: public Heuristic {
                     }
                 }
 
-                var.heuristicValue = heuristicValue;
+                std::cout << "Heuristic value: " << heuristicValue << std::endl;
+
+                heuristicValues[var.id - 1] = heuristicValue;
             }
 
             sortVariables();
+
+            Var first = variables.front();
+
+            std::cout << "First element: " << first.id << ", value: " << heuristicValues[first.id - 1] << std::endl;
         }
 
         void sortVariables() {
@@ -97,8 +108,26 @@ class JeroslowWang: public Heuristic {
         void updateVariable(Var var, Cl* clause) {
             if (dynamicHeuristic) {
                 //std::cout << "Update variable: " << var.id << std::endl;
-                double clauseSize = static_cast<double>(clause->literals.size());
-                var.heuristicValue -= pow(2, -clauseSize);
+                //double clauseSize = static_cast<double>(clause->literals.size());
+                //heuristicValues[var.id - 1] -= pow(2, -clauseSize);
+
+                double heuristicValue = 0;
+
+                for (Cl* clause: var.negOccList) {
+                    if (clause->literals.size() > 0) {
+                        double clauseSize = static_cast<double>(clause->literals.size());
+                        heuristicValue += pow(2, -clauseSize);
+                    }
+                }
+
+                for (Cl* clause: var.negOccList) {
+                    if (clause->literals.size() > 0) {
+                        double clauseSize = static_cast<double>(clause->literals.size());
+                        heuristicValue += pow(2, -clauseSize);
+                    }
+                }
+
+                heuristicValues[var.id - 1] = heuristicValue;
             }
         }
 };
