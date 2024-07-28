@@ -91,7 +91,7 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
-        Propagation::propagate(clauses, variables, trail, head);
+        Propagation::propagate(clauses, variables, trail, head, heuristic);
 
         //std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
 

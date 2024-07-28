@@ -6,10 +6,11 @@
 
 
 #include "SATTypes.h"
+#include "Heuristics.h"
 
 namespace Propagation {
     
-    void propagate(std::vector<Cl>& clauses, std::vector<Var>& variables, std::vector<Var>& trail, int& head) {
+    void propagate(std::vector<Cl>& clauses, std::vector<Var>& variables, std::vector<Var>& trail, int& head, Heuristic* heuristic) {
         while (head < trail.size()) {
             Var var = trail[head];
             head++;
@@ -30,7 +31,7 @@ namespace Propagation {
 
             //std::cout << "Propagated variable: " << var.id << ", state: " << var.state << std::endl;
 
-            //iterate over the clauses that are satisfied and clear them and update the counters
+            //iterate over the clauses that are satisfied and clear them and update the counters and the heuristic
             for (Cl* clause: satOccList) {
                 for (Lit lit: clause->literals) {
                     Var& satVar = variables.at(lit.id - 1);
@@ -40,6 +41,8 @@ namespace Propagation {
                     } else {
                         satVar.nrPosOcc -= 1;
                     }
+
+                    heuristic->updateVariable(satVar, clause);
                 }
 
                 clause->literals.clear();

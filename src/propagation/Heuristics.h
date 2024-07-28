@@ -22,6 +22,8 @@ class Heuristic {
 
         virtual ~Heuristic() {}
 
+        virtual void updateVariable(Var var, Cl* clause) = 0;
+
         Var getNextVar() {
             if (variables.size() == 0) {
                 throw std::runtime_error("Error, the model is not satisfying!");
@@ -53,51 +55,51 @@ class JeroslowWang: public Heuristic {
         static bool compare (const Var variable1, const Var variable2) {
             //std::cout << "variable1: " << variable1.id << ", variable2: " << variable2.id << std::endl;
 
-            double j1 = 0;
-            double j2 = 0;
+            double heuristicValue1 = variable1.heuristicValue;
+            double heuristicValue2 = variable2.heuristicValue;
 
-            for (Cl* clause: variable1.negOccList) {
-                if (clause->literals.size() > 0) {
-                    double clauseSize = static_cast<double>(clause->literals.size());
-                    j1 += pow(2, -clauseSize);
-                }
-            }
-
-            for (Cl* clause: variable1.posOccList) {
-                if (clause->literals.size() > 0) {
-                    double clauseSize = static_cast<double>(clause->literals.size());
-                    j1 += pow(2, -clauseSize);
-                }
-            }
-
-            for (Cl* clause: variable2.negOccList) {
-                if (clause->literals.size() > 0) {
-                    double clauseSize = static_cast<double>(clause->literals.size());
-                    j2 += pow(2, -clauseSize);
-                }
-            }
-
-            for (Cl* clause: variable2.posOccList) {
-                if (clause->literals.size() > 0) {
-                    double clauseSize = static_cast<double>(clause->literals.size());
-                    j2 += pow(2, -clauseSize);
-                }
-            }
-
-            if (j1 == j2) {
+            if (heuristicValue1 == heuristicValue2) {
                 return variable1.id < variable2.id;
             }
 
-            return j1 > j2;
+            return heuristicValue1 > heuristicValue2;
         }
 
     public:
         explicit JeroslowWang(std::deque<Var> variables, bool dynamic) : Heuristic(variables, dynamic) {
+            for (Var var: variables) {
+                double heuristicValue = 0;
+
+                for (Cl* clause: var.negOccList) {
+                    if (clause->literals.size() > 0) {
+                        double clauseSize = static_cast<double>(clause->literals.size());
+                        heuristicValue += pow(2, -clauseSize);
+                    }
+                }
+
+                for (Cl* clause: var.negOccList) {
+                    if (clause->literals.size() > 0) {
+                        double clauseSize = static_cast<double>(clause->literals.size());
+                        heuristicValue += pow(2, -clauseSize);
+                    }
+                }
+
+                var.heuristicValue = heuristicValue;
+            }
+
             sortVariables();
         }
 
         void sortVariables() {
             std::sort(variables.begin(), variables.end(), compare);
+        }
+
+        void updateVariable(Var var, Cl* clause) {
+            if (dynamicHeuristic) {
+                //std::cout << "Update variable: " << var.id << std::endl;
+                double clauseSize = static_cast<double>(clause->literals.size());
+                var.heuristicValue -= pow(2, -clauseSize);
+            }
         }
 };
 

@@ -76,8 +76,9 @@ struct Var
     unsigned int nrNegOcc;
     std::vector<Cl*> posOccList;
     std::vector<Cl*> negOccList; 
+    double heuristicValue;
 
-    Var(unsigned int id) : id(id), state(Assignment::OPEN), nrPosOcc(0), nrNegOcc(0) {}
+    Var(unsigned int id) : id(id), state(Assignment::OPEN), nrPosOcc(0), nrNegOcc(0), heuristicValue(0) {}
 
     bool operator< (Var var) const {
         return id < var.id;
