@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <math.h>
 #include <set>
+#include <queue>
 
 #include "SATTypes.h"
 
@@ -15,9 +16,12 @@ class Heuristic {
         std::deque<Var> variables;
         bool dynamicHeuristic;
         virtual void sortVariables() = 0;
+        std::set<Var, std::function<bool(Var, Var)>> variablesSet;
+
 
     public:
-        explicit Heuristic(std::deque<Var> variables, bool dynamicHeuristic) : variables(variables), dynamicHeuristic(dynamicHeuristic) {
+        explicit Heuristic(std::deque<Var> variables, bool dynamicHeuristic, std::function<bool(const Var, const Var)> compare) : variables(variables), dynamicHeuristic(dynamicHeuristic) {
+            variablesSet = std::set<Var, std::function<bool(Var, Var)>>(compare);
         }
 
         virtual ~Heuristic() {}
@@ -25,12 +29,12 @@ class Heuristic {
         virtual void updateVariable(Var var, Cl* clause) = 0;
 
         Var getNextVar() {
-            if (variables.size() == 0) {
+            if (variablesSet.size() == 0) {
                 throw std::runtime_error("Error, the model is not satisfying!");
             }
 
-            Var nextVar = variables.front();
-            variables.pop_front();
+            Var nextVar = *(variablesSet.begin());
+            variablesSet.erase(nextVar);
             return nextVar;
         }
 
@@ -44,14 +48,14 @@ class Heuristic {
 
 class ParsingOrder: public Heuristic {
     public:
-        ParsingOrder(std::deque<Var> variables) : Heuristic(variables, false) {}
+        ParsingOrder(std::deque<Var> variables) : Heuristic(variables, false, NULL) {}
 
         //the list does not get sorted so the method doesn't have to be implemented
         void sortVariables() {} 
 };
 
 class JeroslowWang: public Heuristic {
-    private:
+    protected:
         static bool compare (const Var variable1, const Var variable2) {
             double heuristicValue1 = heuristicValues[variable1.id - 1];
             double heuristicValue2 = heuristicValues[variable2.id - 1];
@@ -68,9 +72,8 @@ class JeroslowWang: public Heuristic {
     public:
         static std::vector<double> heuristicValues; 
 
-        explicit JeroslowWang(std::deque<Var> variables_, bool dynamic) : Heuristic(variables_, dynamic) {
-            std::cout << "Constructor" << std::endl;
-            heuristicValues = std::vector<double>(variables.size(), 0);
+        explicit JeroslowWang(std::deque<Var> variables_, bool dynamic) : Heuristic(variables_, dynamic, &compare) {
+            //heuristicValues.resize(variables.size(), 0);
 
             for (Var var: variables) {
                 double heuristicValue = 0;
@@ -82,23 +85,20 @@ class JeroslowWang: public Heuristic {
                     }
                 }
 
-                for (Cl* clause: var.negOccList) {
+                for (Cl* clause: var.posOccList) {
                     if (clause->literals.size() > 0) {
                         double clauseSize = static_cast<double>(clause->literals.size());
                         heuristicValue += pow(2, -clauseSize);
                     }
                 }
 
-                std::cout << "Heuristic value: " << heuristicValue << std::endl;
-
-                heuristicValues[var.id - 1] = heuristicValue;
+                //heuristicValues[var.id - 1] = heuristicValue;
+                heuristicValues.push_back(heuristicValue);
             }
 
-            sortVariables();
-
-            Var first = variables.front();
-
-            std::cout << "First element: " << first.id << ", value: " << heuristicValues[first.id - 1] << std::endl;
+            for (Var var: variables) {
+                variablesSet.insert(var);
+            }
         }
 
         void sortVariables() {
@@ -107,27 +107,13 @@ class JeroslowWang: public Heuristic {
 
         void updateVariable(Var var, Cl* clause) {
             if (dynamicHeuristic) {
+                //remove the variable from the set and reinsert it to update the position
+                variablesSet.erase(var);
                 //std::cout << "Update variable: " << var.id << std::endl;
-                //double clauseSize = static_cast<double>(clause->literals.size());
-                //heuristicValues[var.id - 1] -= pow(2, -clauseSize);
+                double clauseSize = static_cast<double>(clause->literals.size());
+                heuristicValues[var.id - 1] -= pow(2, -clauseSize);
 
-                double heuristicValue = 0;
-
-                for (Cl* clause: var.negOccList) {
-                    if (clause->literals.size() > 0) {
-                        double clauseSize = static_cast<double>(clause->literals.size());
-                        heuristicValue += pow(2, -clauseSize);
-                    }
-                }
-
-                for (Cl* clause: var.negOccList) {
-                    if (clause->literals.size() > 0) {
-                        double clauseSize = static_cast<double>(clause->literals.size());
-                        heuristicValue += pow(2, -clauseSize);
-                    }
-                }
-
-                heuristicValues[var.id - 1] = heuristicValue;
+                variablesSet.insert(var);
             }
         }
 };
@@ -176,7 +162,7 @@ class MomsFreeman: public Heuristic {
             static unsigned int minClauseLength;
             static std::vector<unsigned int> heuristicValues; 
 
-            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(std::deque<Var>(), dynamic), clauses(clauses), allVariables(variables) {
+            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(std::deque<Var>(), dynamic, &compare), clauses(clauses), allVariables(variables) {
                 heuristicValues = std::vector<unsigned int>(variables.size(), 0);
                 currentVariables = std::vector<bool>(variables.size(), false);
                 
