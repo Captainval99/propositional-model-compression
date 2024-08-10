@@ -6,6 +6,7 @@
 #include <math.h>
 #include <set>
 #include <queue>
+#include <map>
 
 #include "SATTypes.h"
 
@@ -17,6 +18,7 @@ class Heuristic {
         bool dynamicHeuristic;
         virtual void sortVariables() = 0;
         std::set<Var, std::function<bool(Var, Var)>> variablesSet;
+        std::map<unsigned int, bool> activeVariables;
 
 
     public:
@@ -35,6 +37,7 @@ class Heuristic {
 
             Var nextVar = *(variablesSet.begin());
             variablesSet.erase(nextVar);
+            activeVariables[nextVar.id] = false;
             return nextVar;
         }
 
@@ -73,10 +76,10 @@ class JeroslowWang: public Heuristic {
         static std::vector<double> heuristicValues; 
 
         explicit JeroslowWang(std::deque<Var> variables_, bool dynamic) : Heuristic(variables_, dynamic, &compare) {
-            //heuristicValues.resize(variables.size(), 0);
-
-            for (Var var: variables) {
+            for (Var var: variables_) {
                 double heuristicValue = 0;
+
+                //std::cout << "neg size: " << var.negOccList.size() << ", pos size: " << var.posOccList.size() << std::endl;
 
                 for (Cl* clause: var.negOccList) {
                     if (clause->literals.size() > 0) {
@@ -94,9 +97,12 @@ class JeroslowWang: public Heuristic {
 
                 //heuristicValues[var.id - 1] = heuristicValue;
                 heuristicValues.push_back(heuristicValue);
+                activeVariables[var.id] = true;
+
+                //std::cout << "Var: " << var.id << ", heuristic value: " << heuristicValue << std::endl;
             }
 
-            for (Var var: variables) {
+            for (Var var: variables_) {
                 variablesSet.insert(var);
             }
         }
@@ -107,13 +113,17 @@ class JeroslowWang: public Heuristic {
 
         void updateVariable(Var var, Cl* clause) {
             if (dynamicHeuristic) {
-                //remove the variable from the set and reinsert it to update the position
-                variablesSet.erase(var);
                 //std::cout << "Update variable: " << var.id << std::endl;
-                double clauseSize = static_cast<double>(clause->literals.size());
-                heuristicValues[var.id - 1] -= pow(2, -clauseSize);
+                //remove the variable from the set and reinsert it to update the position
+                if (activeVariables[var.id]) {
+                    variablesSet.erase(var);
 
-                variablesSet.insert(var);
+                    double clauseSize = static_cast<double>(clause->literals.size());
+                    heuristicValues[var.id - 1] -= pow(2, -clauseSize);
+
+                    variablesSet.insert(var);
+                }
+                
             }
         }
 };
