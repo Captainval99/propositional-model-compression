@@ -64,7 +64,9 @@ class StatsOutput {
                 avgCompressedSize += stat.compressionFileSize;
                 geometricMeanFileSize *= std::pow(stat.compressionRatioFileSize, 1.0/statistics.size());
                 geometricMeanBitvector *= std::pow(stat.compressionRatioBitvector, 1.0/statistics.size());
-                geometricMeanHitRate *= std::pow(stat.predictionHitRate, 1.0/statistics.size());
+                if (stat.predictionHitRate != 0) {
+                    geometricMeanHitRate *= std::pow(stat.predictionHitRate, 1.0/statistics.size());
+                }
                 avgParsingTime += stat.parsingTime;
                 avgOverallTime += stat.overallTime;
 
