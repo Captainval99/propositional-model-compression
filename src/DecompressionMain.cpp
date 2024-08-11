@@ -10,7 +10,7 @@
 
 namespace fs = std::filesystem;
 
-std::vector<double> JeroslowWang::heuristicValues; 
+std::map<unsigned int, double> Heuristic::heuristicValues;
 
 void decompressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     Parser parser(formulaFile, modelFile);

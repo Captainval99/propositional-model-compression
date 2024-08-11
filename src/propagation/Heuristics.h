@@ -9,73 +9,70 @@
 #include <map>
 
 #include "SATTypes.h"
+#include "Heap.h"
 
 //abstract base class
 class Heuristic {
 
     protected:
+        struct VarComparator {
+            bool operator()(Var x, Var y) const {
+                if (heuristicValues[x.id] == heuristicValues[y.id]) {
+                    return x.id < y.id;
+                }
+
+                if (x.id == 2020 || y.id == 2020) {
+                }
+
+                return heuristicValues[x.id] > heuristicValues[y.id]; 
+            }
+        };
+
         std::deque<Var> variables;
         bool dynamicHeuristic;
-        virtual void sortVariables() = 0;
-        std::set<Var, std::function<bool(Var, Var)>> variablesSet;
+        Minisat::Heap<Var, VarComparator> variablesHeap = Minisat::Heap<Var, VarComparator>(VarComparator());
         std::map<unsigned int, bool> activeVariables;
 
-
     public:
-        explicit Heuristic(std::deque<Var> variables, bool dynamicHeuristic, std::function<bool(const Var, const Var)> compare) : variables(variables), dynamicHeuristic(dynamicHeuristic) {
-            variablesSet = std::set<Var, std::function<bool(Var, Var)>>(compare);
+        static std::map<unsigned int, double> heuristicValues;
+
+        explicit Heuristic(std::deque<Var> variables, bool dynamicHeuristic) : variables(variables), dynamicHeuristic(dynamicHeuristic) {
         }
 
         virtual ~Heuristic() {}
 
-        virtual void updateVariable(Var var, Cl* clause) = 0;
+        virtual void updateVariables(Cl* clause) = 0;
 
         Var getNextVar() {
-            if (variablesSet.size() == 0) {
+            if (variablesHeap.empty()) {
                 throw std::runtime_error("Error, the model is not satisfying!");
             }
 
-            Var nextVar = *(variablesSet.begin());
-            variablesSet.erase(nextVar);
-            activeVariables[nextVar.id] = false;
-            return nextVar;
-        }
+            Var nextVar = variablesHeap.removeMin();
 
-        void updateHeuristic() {
-            //if heuristic is static it is not necessary to recalculate the heuristic
-            if (dynamicHeuristic) {
-                sortVariables();
-            }
+            activeVariables[nextVar.id] = false;
+
+            return nextVar;
         }
 };
 
 class ParsingOrder: public Heuristic {
     public:
-        ParsingOrder(std::deque<Var> variables) : Heuristic(variables, false, NULL) {}
+        ParsingOrder(std::deque<Var> variables) : Heuristic(variables, false) {
+            for (Var var: variables) {
+                //invert the id so that the smallest id gets assigned first because of max heap
+                heuristicValues[var.id] = var.id * -1.0;
+                variablesHeap.insert(var);
+            }
+        }
 
-        //the list does not get sorted so the method doesn't have to be implemented
-        void sortVariables() {} 
+        void updateVariables(Cl* clause) {}
 };
 
 class JeroslowWang: public Heuristic {
-    protected:
-        static bool compare (const Var variable1, const Var variable2) {
-            double heuristicValue1 = heuristicValues[variable1.id - 1];
-            double heuristicValue2 = heuristicValues[variable2.id - 1];
-
-            //std::cout << "variable1: " << variable1.id << ", variable2: " << variable2.id << ", value1: " << heuristicValue1 << ", value2: " << heuristicValue2 << std::endl;
-
-            if (heuristicValue1 == heuristicValue2) {
-                return variable1.id < variable2.id;
-            }
-
-            return heuristicValue1 > heuristicValue2;
-        }
 
     public:
-        static std::vector<double> heuristicValues; 
-
-        explicit JeroslowWang(std::deque<Var> variables_, bool dynamic) : Heuristic(variables_, dynamic, &compare) {
+        explicit JeroslowWang(std::deque<Var> variables_, bool dynamic) : Heuristic(variables_, dynamic) {
             for (Var var: variables_) {
                 double heuristicValue = 0;
 
@@ -96,44 +93,43 @@ class JeroslowWang: public Heuristic {
                 }
 
                 //heuristicValues[var.id - 1] = heuristicValue;
-                heuristicValues.push_back(heuristicValue);
+                heuristicValues[var.id] = heuristicValue;
                 activeVariables[var.id] = true;
+                variablesHeap.insert(var);
 
                 //std::cout << "Var: " << var.id << ", heuristic value: " << heuristicValue << std::endl;
             }
+        }
 
-            for (Var var: variables_) {
-                variablesSet.insert(var);
+        void updateVariables(Cl* clause) {
+            if (!dynamicHeuristic) {
+                return;
             }
-        }
 
-        void sortVariables() {
-            std::sort(variables.begin(), variables.end(), compare);
-        }
+            //update all variables in the clause
+            for (Lit lit: clause->literals) {
+                Var& var = variables.at(lit.id - 1);
 
-        void updateVariable(Var var, Cl* clause) {
-            if (dynamicHeuristic) {
                 //std::cout << "Update variable: " << var.id << std::endl;
                 //remove the variable from the set and reinsert it to update the position
                 if (activeVariables[var.id]) {
-                    variablesSet.erase(var);
-
                     double clauseSize = static_cast<double>(clause->literals.size());
-                    heuristicValues[var.id - 1] -= pow(2, -clauseSize);
+                    heuristicValues[var.id] -= pow(2, -clauseSize);
 
-                    variablesSet.insert(var);
+                    variablesHeap.update(var);
                 }
-                
             }
         }
 };
 
 class MomsFreeman: public Heuristic {
     private:
-        static constexpr double MOMS_PARAMETER = 10.0;
+        const double MOMS_PARAMETER = std::pow(2, 10.0);
+        unsigned int minClauseLength;
         std::vector<Cl>& clauses;
         std::vector<bool> currentVariables;
         std::deque<Var> allVariables;
+        unsigned int nrMinClauses = 0;
 
         void calculateHeuristicValue(Var variable) {
             unsigned int posCount = 0;
@@ -151,108 +147,109 @@ class MomsFreeman: public Heuristic {
                 }
             }
 
-            unsigned int heuristicValue = (posCount + negCount) * std::pow(2, MOMS_PARAMETER) + posCount * negCount;
+            unsigned int heuristicValue = (posCount + negCount) * MOMS_PARAMETER + posCount * negCount;
 
-            heuristicValues[variable.id - 1] = heuristicValue;
-
+            heuristicValues[variable.id] = heuristicValue;
         }
 
-        static bool compare(const Var variable1, const Var variable2) {
-            unsigned int momsValue1 = heuristicValues[variable1.id - 1];
-            unsigned int momsValue2 = heuristicValues[variable2.id - 1];
+        void findMinClauseLength() {
+            //determine the length of the shortest clause
+            minClauseLength = clauses[0].literals.size();
 
-            if (momsValue1 == momsValue2) {
-                return variable1.id < variable2.id;
+            unsigned int i = 1;
+
+            //find the first clause that is not satisfied
+            while (minClauseLength == 0 && i < clauses.size()) {
+                minClauseLength = clauses[i].literals.size();
+                i +=1 ;
             }
 
-            return momsValue1 > momsValue2;
+            nrMinClauses = 1;
+
+            while (i < clauses.size()) {
+                unsigned int currentSize = clauses[i].literals.size();
+
+                if (currentSize != 0 && currentSize < minClauseLength) {
+                    minClauseLength = currentSize;
+                    nrMinClauses = 1;
+                } else if (currentSize == minClauseLength) {
+                    nrMinClauses += 1;
+                }
+
+                i += 1;
+            }
         }
 
         public:
-            static unsigned int minClauseLength;
-            static std::vector<unsigned int> heuristicValues; 
-
-            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(std::deque<Var>(), dynamic, &compare), clauses(clauses), allVariables(variables) {
-                heuristicValues = std::vector<unsigned int>(variables.size(), 0);
+            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses), allVariables(variables) {
                 currentVariables = std::vector<bool>(variables.size(), false);
+
+                findMinClauseLength();
                 
-                sortVariables();
+                for (Var var: variables) {
+                    calculateHeuristicValue(var);
+                    activeVariables[var.id] = true;
+                    variablesHeap.insert(var);
+                    //std::cout << "Id: " << var.id << ", heuristics value: " << heuristicValues[var.id] << std::endl;
+                }
             }
 
-            void sortVariables() {
-                std::cout << "Size: " << variables.size() << std::endl;
-                //check if there are still variables that are still unasigned in the current variables list
-                unsigned int i = 0;
-                while (i < variables.size()) {
-                    Var var = variables[i];
-                    calculateHeuristicValue(var);
-                    //heuristic value is 0 when the variable isn't contained in any clauses with minimal size
-                    if (heuristicValues[var.id - 1] == 0) {
-                        variables.erase(variables.begin() + i);
-                        currentVariables[var.id - 1] = false;
-                    } else {
-                        i += 1;
-                    }
+            void updateVariables(Cl* clause) {
+                //is only executed if the heuristic is dynamic
+                if (!dynamicHeuristic) {
+                    return;
                 }
-                //std::cout << "variables empty: " << variables.empty() << currentVariables.size() << std::endl;  
 
-                //if there are no variables left in the set the minimum length and heuristic values have to be recalculated
-                if (variables.empty()) {
-                    //determine the length of the shortest clause
-                    minClauseLength = clauses[0].literals.size();
+                if ((clause->literals.size() == minClauseLength)) {
+                    nrMinClauses -= 1;
 
-                    unsigned int i = 1;
+                    for (Lit lit: clause->literals) {
+                        Var& var = variables.at(lit.id - 1);
 
-                    //find the first clause that is not satisfied
-                    while (minClauseLength == 0 && i < clauses.size()) {
-                        minClauseLength = clauses[i].literals.size();
-                        i +=1 ;
-                    }
+                        //update the heuristic value of all variables in the clause that are still in the heap
+                        if (activeVariables[var.id]) {
+                            std::vector<Cl*> occList;
 
-                    //add variables of first clause to set 
-                    for (Lit lit: clauses[i - 1].literals) {
-                        Var var = allVariables[lit.id - 1];
-                        if (!currentVariables[var.id - 1]) {
-                            variables.push_back(var);
-                            currentVariables[var.id - 1] = true;
-                        }
-                    }
-                    
-                    while (i < clauses.size()) {
-                        unsigned int currentSize = clauses[i].literals.size();
+                            if (lit.negative) {
+                                occList = var.posOccList;
+                            } else {
+                                occList = var.negOccList;
+                            }
 
-                        if (currentSize != 0 && currentSize < minClauseLength) {
-                            minClauseLength = currentSize;
-                            currentVariables.clear();
-                            currentVariables.resize(allVariables.size());
-                            variables.clear();
-                        }
-                        
-                        //insert variables into set if clause is of mininmal length
-                        if (currentSize == minClauseLength) {
-                            for (Lit lit: clauses[i].literals) {
-                                //std::cout << "lit id: " << lit.id << ", allVars size: " << allVariables.size() << std::endl;
-                                Var var = allVariables[lit.id - 1];
-                                if (!currentVariables[var.id - 1]) {
-                                    variables.push_back(var);
-                                    currentVariables[var.id - 1] = true;
+                            unsigned int count = 0;
+
+                            for (Cl* clause: occList) {
+                                if (clause->literals.size() == minClauseLength) {
+                                    count += 1;
                                 }
                             }
+
+                            heuristicValues[var.id] -= MOMS_PARAMETER - count; 
+
+                            variablesHeap.update(var);
                         }
 
-                        i += 1;
+
                     }
+                }
+
+
+                //std::cout << "minClauseOccs: " << nrMinClauses << std::endl;
+
+                //if all clauses of minimum length are satisfied, all heuristic values have to be recalculated
+                if (nrMinClauses == 0) {
+                    //clear the clause so that it won't count as minimum clause as it is already satisfied
+                    clause->literals.clear();
+
+                    findMinClauseLength();
 
                     for (Var var: variables) {
-                        calculateHeuristicValue(var);
+                        if (activeVariables[var.id]) {
+                            calculateHeuristicValue(var);
+                            variablesHeap.update(var);
+                        }   
                     }
                 }
-                //std::cout << "min length heuristic: " << minClauseLength << std::endl;
-                if (!dynamicHeuristic) {
-                    variables = std::deque(allVariables.begin(), allVariables.end());
-                }
-
-                std::sort(variables.begin(), variables.end(), compare);
             }
 };
 

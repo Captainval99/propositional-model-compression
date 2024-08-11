@@ -14,9 +14,7 @@
 
 namespace fs = std::filesystem;
 
-unsigned int MomsFreeman::minClauseLength;
-std::vector<unsigned int> MomsFreeman::heuristicValues;
-std::vector<double> JeroslowWang::heuristicValues; 
+std::map<unsigned int, double> Heuristic::heuristicValues;
 
 static const unsigned int PREDICTION_FLIP_VALUE = 30;
 
@@ -63,8 +61,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     //create Heuristic object to sort the variables using a specific heuristic
     std::deque variablesDq(variables.begin(), variables.end());
-    //Heuristic* heuristic = new MomsFreeman(variablesDq, clauses, true);
-    Heuristic* heuristic = new JeroslowWang(variablesDq, true);
+    Heuristic* heuristic = new MomsFreeman(variablesDq, clauses, true);
+    //Heuristic* heuristic = new JeroslowWang(variablesDq, true);
     std::vector<bool> bitvector;
     bool allSatisfied = false;
     uint64_t predictionMisses = 0;
@@ -78,6 +76,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     while (!allSatisfied) {
         //get next value from the heuristic and assign it to the variable
         Var nextVar = heuristic->getNextVar();
+        //std::cout << "nextVar: " << nextVar.id << std::endl;
 
         //get next value if the variable is already assigned or no model value exists
         while ((variables[nextVar.id -1].state != Assignment::OPEN) || !model.count(nextVar.id)) {

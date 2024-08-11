@@ -105,6 +105,10 @@ struct Var
         }
     }
 
+    operator int() const {
+        return id;
+    }
+
 };
 
 #endif

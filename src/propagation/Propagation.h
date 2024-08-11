@@ -41,9 +41,9 @@ namespace Propagation {
                     } else {
                         satVar.nrPosOcc -= 1;
                     }
-
-                    heuristic->updateVariable(satVar, clause);
                 }
+
+                heuristic->updateVariables(clause);
 
                 clause->literals.clear();
             }
