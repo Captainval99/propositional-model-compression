@@ -37,8 +37,7 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    std::deque variablesDq(variables.begin(), variables.end());
-    Heuristic* heuristic = new JeroslowWang(variablesDq, false);
+    Heuristic* heuristic = new JeroslowWang(variables, false);
 
     bool allSatisfied = false;
     bool allDistancesUsed = false;
@@ -50,7 +49,8 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         compresssionDistances.pop_front();
     }
 
-    std::vector<Var> trail;
+    std::vector<Assignment> values(variables.size(), Assignment::OPEN);
+    std::vector<unsigned int> trail;
     int head = 0;
 
     while (!allSatisfied) {
@@ -58,7 +58,7 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         Var nextVar = heuristic->getNextVar();
 
         //get next value if the variable is already assigned
-        while (variables[nextVar.id -1].state != Assignment::OPEN) {
+        while (values[nextVar.id -1] != Assignment::OPEN) {
             nextVar = heuristic->getNextVar();
             if (!allDistancesUsed) {
                 currentDistance -= 1;
@@ -69,13 +69,18 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         
         //assign the variable according to the prediciton model and invert it if necessary
         if (propVar.nrPosOcc >= propVar.nrNegOcc) {
-            propVar.state = Assignment::TRUE;
+            values[nextVar.id - 1] = Assignment::TRUE;
         } else {
-            propVar.state = Assignment::FALSE;
+            values[nextVar.id - 1] = Assignment::FALSE;
         }
 
         if (!allDistancesUsed && currentDistance == 0) {
-            propVar.invert();
+            //invert the assignment
+            if (values[nextVar.id - 1] == Assignment::TRUE) {
+                values[nextVar.id - 1] = Assignment::FALSE;
+            } else {
+                values[nextVar.id - 1] ==Assignment::TRUE;
+            }
             
             if (compresssionDistances.empty()) {
                 allDistancesUsed = true;
@@ -87,13 +92,13 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
             currentDistance -= 1;
         }
 
-        trail.push_back(propVar);
+        trail.push_back(propVar.id);
 
 
         //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
-        Propagation::propagate(clauses, variables, trail, head, heuristic);
+        Propagation::propagate(clauses, variables, trail, head, heuristic, values);
 
         //std::cout << "\nDuring propagation assigned: " << assigned << std::endl;
 
@@ -119,9 +124,9 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
     for (int i = 0; i < variables.size(); i++) {
         Var var = variables[i];
 
-        if (var.state == Assignment::OPEN) {
+        if (values[i] == Assignment::OPEN) {
             continue;
-        } else if (var.state == Assignment::FALSE) {
+        } else if (values[i] == Assignment::FALSE) {
             outputFileStream << "-";
         }
 

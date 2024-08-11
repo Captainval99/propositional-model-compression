@@ -29,19 +29,14 @@ struct Lit
 struct Cl
 {
     std::vector<Lit> literals;
-    unsigned int nrPos;
-    unsigned int nrNeg;
+    unsigned int nrUnasignedVars;
 
-    Cl() : nrPos(0), nrNeg(0) {}
+    Cl() : nrUnasignedVars(0) {}
 
     void addLiteral(Lit lit) {
         literals.push_back(lit);
 
-        if (lit.negative) {
-            nrNeg += 1;
-        } else {
-            nrPos += 1;
-        }
+        nrUnasignedVars += 1;
     }
 
     bool containsLiteral(Lit lit) {
@@ -71,13 +66,12 @@ struct ModelVar
 struct Var
 {
     unsigned int id;
-    Assignment state;
     unsigned int nrPosOcc;
     unsigned int nrNegOcc;
     std::vector<Cl*> posOccList;
     std::vector<Cl*> negOccList; 
 
-    Var(unsigned int id) : id(id), state(Assignment::OPEN), nrPosOcc(0), nrNegOcc(0) {}
+    Var(unsigned int id) : id(id), nrPosOcc(0), nrNegOcc(0) {}
 
     bool operator< (Var var) const {
         return id < var.id;
@@ -95,14 +89,6 @@ struct Var
     void addNegClause(Cl* clause) {
         negOccList.push_back(clause);
         nrNegOcc += 1;
-    }
-
-    void invert() {
-        if (state == Assignment::FALSE) {
-            state = Assignment::TRUE;
-        } else if (state == Assignment::TRUE) {
-            state = Assignment::FALSE;
-        }
     }
 
     operator int() const {

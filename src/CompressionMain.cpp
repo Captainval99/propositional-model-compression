@@ -60,9 +60,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    std::deque variablesDq(variables.begin(), variables.end());
-    Heuristic* heuristic = new MomsFreeman(variablesDq, clauses, true);
-    //Heuristic* heuristic = new JeroslowWang(variablesDq, true);
+    Heuristic* heuristic = new MomsFreeman(variables, clauses, true);
+    //Heuristic* heuristic = new JeroslowWang(variables, true);
     std::vector<bool> bitvector;
     bool allSatisfied = false;
     uint64_t predictionMisses = 0;
@@ -70,7 +69,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     uint64_t predictionDistance = 0;
     bool flipPredictionModel = false;
 
-    std::vector<Var> trail;
+    std::vector<Assignment> values(variables.size(), Assignment::OPEN);
+    std::vector<unsigned int> trail;
     int head = 0;
 
     while (!allSatisfied) {
@@ -79,7 +79,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         //std::cout << "nextVar: " << nextVar.id << std::endl;
 
         //get next value if the variable is already assigned or no model value exists
-        while ((variables[nextVar.id -1].state != Assignment::OPEN) || !model.count(nextVar.id)) {
+        while ((values[nextVar.id -1] != Assignment::OPEN) || !model.count(nextVar.id)) {
             nextVar = heuristic->getNextVar();
             bitvector.push_back(true);
         }
@@ -93,11 +93,11 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         
         ModelVar modelVar = model.at(nextVar.id);
 
-        Var& propVar = variables[modelVar.id - 1];
-        propVar.state = modelVar.assignment;
-        trail.push_back(propVar);
+        values[modelVar.id - 1] = modelVar.assignment;
+        trail.push_back(modelVar.id);
 
         //check if the model value matches the prediction model
+        Var& propVar = variables[modelVar.id - 1];
         if ((modelVar.assignment == Assignment::FALSE && propVar.nrPosOcc >= propVar.nrNegOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
             bitvector.push_back(false != flipPredictionModel);
             if (!flipPredictionModel) {
@@ -120,7 +120,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         //std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
 
         //propagate the new assigned variable
-        Propagation::propagate(clauses, variables, trail, head, heuristic);
+        Propagation::propagate(clauses, variables, trail, head, heuristic, values);
 
         //recalculate the heuristic values. Only does something if the heuristic is not static
         //heuristic->updateHeuristic();

@@ -28,7 +28,7 @@ class Heuristic {
             }
         };
 
-        std::deque<Var> variables;
+        std::vector<Var> variables;
         bool dynamicHeuristic;
         Minisat::Heap<Var, VarComparator> variablesHeap = Minisat::Heap<Var, VarComparator>(VarComparator());
         std::map<unsigned int, bool> activeVariables;
@@ -36,7 +36,7 @@ class Heuristic {
     public:
         static std::map<unsigned int, double> heuristicValues;
 
-        explicit Heuristic(std::deque<Var> variables, bool dynamicHeuristic) : variables(variables), dynamicHeuristic(dynamicHeuristic) {
+        explicit Heuristic(std::vector<Var> variables, bool dynamicHeuristic) : variables(variables), dynamicHeuristic(dynamicHeuristic) {
         }
 
         virtual ~Heuristic() {}
@@ -58,7 +58,7 @@ class Heuristic {
 
 class ParsingOrder: public Heuristic {
     public:
-        ParsingOrder(std::deque<Var> variables) : Heuristic(variables, false) {
+        ParsingOrder(std::vector<Var> variables) : Heuristic(variables, false) {
             for (Var var: variables) {
                 //invert the id so that the smallest id gets assigned first because of max heap
                 heuristicValues[var.id] = var.id * -1.0;
@@ -72,7 +72,7 @@ class ParsingOrder: public Heuristic {
 class JeroslowWang: public Heuristic {
 
     public:
-        explicit JeroslowWang(std::deque<Var> variables_, bool dynamic) : Heuristic(variables_, dynamic) {
+        explicit JeroslowWang(std::vector<Var> variables_, bool dynamic) : Heuristic(variables_, dynamic) {
             for (Var var: variables_) {
                 double heuristicValue = 0;
 
@@ -127,8 +127,6 @@ class MomsFreeman: public Heuristic {
         const double MOMS_PARAMETER = std::pow(2, 10.0);
         unsigned int minClauseLength;
         std::vector<Cl>& clauses;
-        std::vector<bool> currentVariables;
-        std::deque<Var> allVariables;
         unsigned int nrMinClauses = 0;
 
         void calculateHeuristicValue(Var variable) {
@@ -181,9 +179,7 @@ class MomsFreeman: public Heuristic {
         }
 
         public:
-            explicit MomsFreeman(std::deque<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses), allVariables(variables) {
-                currentVariables = std::vector<bool>(variables.size(), false);
-
+            explicit MomsFreeman(std::vector<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses) {
                 findMinClauseLength();
                 
                 for (Var var: variables) {

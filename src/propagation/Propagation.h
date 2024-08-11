@@ -10,19 +10,21 @@
 
 namespace Propagation {
     
-    void propagate(std::vector<Cl>& clauses, std::vector<Var>& variables, std::vector<Var>& trail, int& head, Heuristic* heuristic) {
+    void propagate(std::vector<Cl>& clauses, std::vector<Var>& variables, std::vector<unsigned int>& trail, int& head, Heuristic* heuristic, std::vector<Assignment>& values) {
         while (head < trail.size()) {
-            Var var = trail[head];
+            unsigned int varId = trail[head];
             head++;
 
             //choose the right occurence list
             std::vector<Cl*> occList;
             std::vector<Cl*> satOccList;
 
-            if(var.state == TRUE) {
+            Var var = variables[varId - 1];
+
+            if(values[varId - 1] == TRUE) {
                 occList = var.negOccList;
                 satOccList = var.posOccList;
-            } else if (var.state == FALSE) {
+            } else if (values[varId - 1] == FALSE) {
                 occList = var.posOccList;
                 satOccList = var.negOccList;
             } else {
@@ -55,25 +57,19 @@ namespace Propagation {
                     continue;
                 }
 
-                if (var.state == TRUE) {
-                    clause->nrNeg -= 1;
-                } else {
-                    clause->nrPos -= 1;
-                }
+                clause->nrUnasignedVars -= 1;
 
                 //check for unit clause
-                if ((clause->nrNeg == 1 && clause->nrPos == 0) || (clause->nrNeg == 0 && clause->nrPos == 1)) {
+                if (clause->nrUnasignedVars == 1) {
                     for (Lit lit: clause->literals) {
-                        Var& unitVar = variables.at(lit.id -1);
-
-                        if (unitVar.state == Assignment::OPEN) {
-                            if(clause->nrNeg == 1) {
-                                unitVar.state = Assignment::FALSE;
+                        if (values[lit.id - 1] == Assignment::OPEN) {
+                            if(lit.negative) {
+                                values[lit.id - 1] = Assignment::FALSE;
                             } else {
-                                unitVar.state = Assignment::TRUE;
+                                values[lit.id - 1] = Assignment::TRUE;
                             }
 
-                            trail.push_back(unitVar);
+                            trail.push_back(lit.id);
                             break;
                         }
                     }
