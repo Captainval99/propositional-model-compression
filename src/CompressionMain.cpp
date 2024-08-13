@@ -60,8 +60,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    Heuristic* heuristic = new MomsFreeman(variables, clauses, true);
-    //Heuristic* heuristic = new JeroslowWang(variables, true);
+    //Heuristic* heuristic = new MomsFreeman(variables, clauses, true);
+    Heuristic* heuristic = new JeroslowWang(variables, true);
     std::vector<bool> bitvector;
     bool allSatisfied = false;
     uint64_t predictionMisses = 0;
@@ -117,7 +117,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
             }
         }
 
-        //std::cout << "Assigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
+        //std::cout << "Assigned Variable: " << propVar.id << " with " << values[propVar.id - 1] << std::endl;
 
         //propagate the new assigned variable
         Propagation::propagate(clauses, variables, trail, head, heuristic, values);

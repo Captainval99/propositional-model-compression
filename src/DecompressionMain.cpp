@@ -12,6 +12,8 @@ namespace fs = std::filesystem;
 
 std::map<unsigned int, double> Heuristic::heuristicValues;
 
+static const unsigned int PREDICTION_FLIP_VALUE = 30;
+
 void decompressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     Parser parser(formulaFile, modelFile);
 
@@ -37,16 +39,23 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
     }
 
     //create Heuristic object to sort the variables using a specific heuristic
-    Heuristic* heuristic = new JeroslowWang(variables, false);
-
+    //Heuristic* heuristic = new MomsFreeman(variables, clauses, true);
+    Heuristic* heuristic = new JeroslowWang(variables, true);
     bool allSatisfied = false;
     bool allDistancesUsed = false;
     uint64_t currentDistance;
+    uint64_t missesCounter = 0;
+    bool flipPredictionModel = false;
+
     if (compresssionDistances.empty()) {
         allDistancesUsed = true;
     } else {
         currentDistance = compresssionDistances.front();
         compresssionDistances.pop_front();
+
+        if (currentDistance == 0) {
+            missesCounter += 1;
+        }
     }
 
     std::vector<Assignment> values(variables.size(), Assignment::OPEN);
@@ -66,12 +75,22 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         }
 
         Var& propVar = variables[nextVar.id - 1];
+
+        
         
         //assign the variable according to the prediciton model and invert it if necessary
         if (propVar.nrPosOcc >= propVar.nrNegOcc) {
-            values[nextVar.id - 1] = Assignment::TRUE;
+            if (flipPredictionModel) {
+                values[nextVar.id - 1] = Assignment::FALSE;
+            } else {
+                values[nextVar.id - 1] = Assignment::TRUE;
+            }
         } else {
-            values[nextVar.id - 1] = Assignment::FALSE;
+            if (flipPredictionModel) {
+                values[nextVar.id - 1] = Assignment::TRUE;
+            } else {
+                values[nextVar.id - 1] = Assignment::FALSE;
+            }
         }
 
         if (!allDistancesUsed && currentDistance == 0) {
@@ -79,7 +98,12 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
             if (values[nextVar.id - 1] == Assignment::TRUE) {
                 values[nextVar.id - 1] = Assignment::FALSE;
             } else {
-                values[nextVar.id - 1] ==Assignment::TRUE;
+                values[nextVar.id - 1] = Assignment::TRUE;
+            }
+
+            //check if the prediction model has to be flipped
+            if (missesCounter == (PREDICTION_FLIP_VALUE - 1)) {
+                flipPredictionModel = true;
             }
             
             if (compresssionDistances.empty()) {
@@ -87,6 +111,12 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
             } else {
                 currentDistance = compresssionDistances.front();
                 compresssionDistances.pop_front();
+
+                if (currentDistance == 0) {
+                    missesCounter += 1;
+                } else {
+                    missesCounter = 0;
+                }
             }
         } else if (!allDistancesUsed) {
             currentDistance -= 1;
@@ -95,7 +125,7 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
         trail.push_back(propVar.id);
 
 
-        //std::cout << "\nAssigned Variable: " << propVar.id << " with " << propVar.state << std::endl;
+        //std::cout << "Assigned Variable: " << propVar.id << " with " << values[propVar.id - 1] << std::endl;
 
         //propagate the new assigned variable
         Propagation::propagate(clauses, variables, trail, head, heuristic, values);
@@ -114,6 +144,8 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
             }   
         }
     }
+
+    std::cout << "prediction flip: " << flipPredictionModel << std::endl; 
 
 
     //write the decompressed model to the output file
