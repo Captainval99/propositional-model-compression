@@ -103,7 +103,7 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
 
             //check if the prediction model has to be flipped
             if (missesCounter == (PREDICTION_FLIP_VALUE - 1)) {
-                flipPredictionModel = true;
+                flipPredictionModel = !flipPredictionModel;
             }
             
             if (compresssionDistances.empty()) {

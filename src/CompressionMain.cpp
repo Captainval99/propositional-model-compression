@@ -86,7 +86,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         //check if the prediction model has to be flipped
         if (predictionDistance == PREDICTION_FLIP_VALUE) {
-            flipPredictionModel = true;
+            flipPredictionModel = !flipPredictionModel;
+            std::cout << "Prediction model was flipped." << std::endl;
         }
 
         nrPredictions += 1;
