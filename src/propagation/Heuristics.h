@@ -21,9 +21,6 @@ class Heuristic {
                     return x.id < y.id;
                 }
 
-                if (x.id == 2020 || y.id == 2020) {
-                }
-
                 return heuristicValues[x.id] > heuristicValues[y.id]; 
             }
         };
@@ -116,7 +113,7 @@ class JeroslowWang: public Heuristic {
                     double clauseSize = static_cast<double>(clause->literals.size());
                     heuristicValues[var.id] -= pow(2, -clauseSize);
 
-                    variablesHeap.update(var);
+                    variablesHeap.increase(var);
                 }
             }
         }
@@ -222,7 +219,7 @@ class MomsFreeman: public Heuristic {
 
                             heuristicValues[var.id] -= MOMS_PARAMETER - count; 
 
-                            variablesHeap.update(var);
+                            variablesHeap.increase(var);
                         }
 
 
@@ -239,10 +236,12 @@ class MomsFreeman: public Heuristic {
 
                     findMinClauseLength();
 
+                    variablesHeap.clear();
+
                     for (Var var: variables) {
                         if (activeVariables[var.id]) {
                             calculateHeuristicValue(var);
-                            variablesHeap.update(var);
+                            variablesHeap.insert(var);
                         }   
                     }
                 }

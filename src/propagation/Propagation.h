@@ -31,10 +31,13 @@ namespace Propagation {
                 throw std::runtime_error("Variable that is propagated has on value assigned.");
             }
 
-            //std::cout << "Propagated variable: " << var.id << ", state: " << var.state << std::endl;
+            //std::cout << "Propagated variable: " << var.id << ", state: " << values[var.id - 1] << std::endl;
+            //std::cout << "occList size: " << occList.size() << ", satOccList size: " << satOccList.size() << std::endl;
 
+            int i = 1;
             //iterate over the clauses that are satisfied and clear them and update the counters and the heuristic
             for (Cl* clause: satOccList) {
+                //std::cout << "sat occ list: " << i++ << std::endl;
                 for (Lit lit: clause->literals) {
                     Var& satVar = variables.at(lit.id - 1);
 
@@ -50,8 +53,11 @@ namespace Propagation {
                 clause->literals.clear();
             }
 
+            i = 1;
+
             //iterate over occurence list and update counters
             for (Cl* clause: occList) {
+                //std::cout << "occ list: " << i++ << std::endl;
                 //check if the clause is already satisfied
                 if (clause->literals.size() == 0) {
                     continue;
