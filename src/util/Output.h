@@ -24,8 +24,8 @@ struct CompressionInfo {
     explicit CompressionInfo(std::size_t formulaSize, std::size_t modelSize, std::size_t variablesSize, std::uintmax_t modelFileSize, std::uintmax_t compressionFileSize, unsigned int bitvectorSize, unsigned int diffEncodingSize, float predictionHitRate, double parsingTime, double overallTime) : 
                             formulaSize(formulaSize), modelSize(modelSize), variablesSize(variablesSize), modelFileSize(modelFileSize), compressionFileSize(compressionFileSize), bitvectorSize(bitvectorSize), diffEncodingSize(diffEncodingSize), predictionHitRate(predictionHitRate), parsingTime(parsingTime), overallTime(overallTime) {
         compressionRatioFileSize = (float) modelFileSize / compressionFileSize;
-        unsigned int bitvectorSize = 1 + ((modelSize - 1) / 8);
-        compressionRatioBitvector = (float) bitvectorSize / compressionFileSize;
+        unsigned int bitvectorFileSize = 1 + ((modelSize - 1) / 8);
+        compressionRatioBitvector = (float) bitvectorFileSize / compressionFileSize;
     }
 
     void addNames(const std::string formulaName_, const std::string modelName_) {
