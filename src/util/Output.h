@@ -13,14 +13,16 @@ struct CompressionInfo {
     unsigned int variablesSize;
     std::uintmax_t modelFileSize;
     std::uintmax_t compressionFileSize;
+    unsigned int bitvectorSize;
+    unsigned int diffEncodingSize;
     float compressionRatioFileSize;
     float compressionRatioBitvector;
     float predictionHitRate;
     double parsingTime;
     double overallTime;
 
-    explicit CompressionInfo(std::size_t formulaSize, std::size_t modelSize, std::size_t variablesSize, std::uintmax_t modelFileSize, std::uintmax_t compressionFileSize, float predictionHitRate, double parsingTime, double overallTime) : 
-                            formulaSize(formulaSize), modelSize(modelSize), variablesSize(variablesSize), modelFileSize(modelFileSize), compressionFileSize(compressionFileSize), predictionHitRate(predictionHitRate), parsingTime(parsingTime), overallTime(overallTime) {
+    explicit CompressionInfo(std::size_t formulaSize, std::size_t modelSize, std::size_t variablesSize, std::uintmax_t modelFileSize, std::uintmax_t compressionFileSize, unsigned int bitvectorSize, unsigned int diffEncodingSize, float predictionHitRate, double parsingTime, double overallTime) : 
+                            formulaSize(formulaSize), modelSize(modelSize), variablesSize(variablesSize), modelFileSize(modelFileSize), compressionFileSize(compressionFileSize), bitvectorSize(bitvectorSize), diffEncodingSize(diffEncodingSize), predictionHitRate(predictionHitRate), parsingTime(parsingTime), overallTime(overallTime) {
         compressionRatioFileSize = (float) modelFileSize / compressionFileSize;
         unsigned int bitvectorSize = 1 + ((modelSize - 1) / 8);
         compressionRatioBitvector = (float) bitvectorSize / compressionFileSize;
@@ -113,13 +115,13 @@ class StatsOutput {
 
         void printStatistics() {
             //print the headers
-            std::cout << std::left << std::setw(36) << "Instance:" << std::setw(40) << "Model:" << std::setw(10) << "Clauses" << std::setw(10) << "Vars" << std::setw(10) << "Model" << std::setw(10) << "File" << std::setw(10) << "Compr." << std::setw(10) << "Compr." << std::setw(10) << "Bitvec" << std::setw(10) << "Predic" << std::setw(10) << "Pars." << std::setw(10) << "Exec." << std::endl;
-            std::cout << std::left << std::setw(76) << "" << std::setw(10) << "count:" << std::setw(10) << "count:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "ratio:" << std::setw(10) << "ratio:" << std::setw(10) << "HitRt:" << std::setw(10) << "time:" << std::setw(10) << "time:" << std::endl;
+            std::cout << std::left << std::setw(36) << "Instance:" << std::setw(40) << "Model:" << std::setw(10) << "Clauses" << std::setw(10) << "Vars" << std::setw(10) << "Model" << std::setw(10) << "File" << std::setw(10) << "Compr." << std::setw(10) << "Compr." << std::setw(10) << "Bitvec" << std::setw(10) << "Predic" << std::setw(10) << "Pars." << std::setw(10) << "Exec." << std::setw(10) << "Bitvec" << std::setw(10) << "Diff." << std::endl;
+            std::cout << std::left << std::setw(76) << "" << std::setw(10) << "count:" << std::setw(10) << "count:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::setw(10) << "ratio:" << std::setw(10) << "ratio:" << std::setw(10) << "HitRt:" << std::setw(10) << "time:" << std::setw(10) << "time:" << std::setw(10) << "size:" << std::setw(10) << "size:" << std::endl;
 
             //print the values
             for (CompressionInfo stat: statistics) {
                 std::cout << std::left << std::setw(36) << stat.formulaName << std::setw(40) << stat.modelName << std::setw(10) << stat.formulaSize << std::setw(10) << stat.variablesSize << std::setw(10)
-                << stat.modelSize << std::setw(10) << stat.modelFileSize << std::setw(10) << stat.compressionFileSize << std::setw(10) << stat.compressionRatioFileSize << std::setw(10) << stat.compressionRatioBitvector << std::setw(10) << stat.predictionHitRate << std::setw(10) << stat.parsingTime << std::setw(10) << stat.overallTime << std::endl;
+                << stat.modelSize << std::setw(10) << stat.modelFileSize << std::setw(10) << stat.compressionFileSize << std::setw(10) << stat.compressionRatioFileSize << std::setw(10) << stat.compressionRatioBitvector << std::setw(10) << stat.predictionHitRate << std::setw(10) << stat.parsingTime << std::setw(10) << stat.overallTime << std::setw(10) << stat.bitvectorSize << std::setw(10) << stat.diffEncodingSize << std::endl;
             }
 
             //print the general statistics
@@ -139,12 +141,12 @@ class StatsOutput {
             std::ofstream outputFile(filePath);
 
             //write the headers
-            outputFile << "Instance, Model, Clauses count, Variables count, Model variable count, Model file size, Compressed file size, Compression ratio file sizes, Compression ratio bitvector, Prediction model hit rate, Parsing time, Execution time\n";
+            outputFile << "Instance, Model, Clauses count, Variables count, Model variable count, Model file size, Compressed file size, Compression ratio file sizes, Compression ratio bitvector, Prediction model hit rate, Parsing time, Execution time, Bitvector size, Diff encoding size\n";
 
             //write the values
             for (CompressionInfo stat: statistics) {
                 outputFile << stat.formulaName << ", " << stat.modelName << ", " << stat.formulaSize << ", " << stat.variablesSize << ", " << stat.modelSize << ", " << stat.modelFileSize << ", " << stat.compressionFileSize << ", " << stat.compressionRatioFileSize << ", " << stat.compressionRatioBitvector << ", " << stat.predictionHitRate
-                           << ", " << stat.parsingTime << ", " << stat.overallTime << "\n";
+                           << ", " << stat.parsingTime << ", " << stat.overallTime << ", " << stat.bitvectorSize << ", " << stat.diffEncodingSize << "\n";
             }
 
             //write general statistics
