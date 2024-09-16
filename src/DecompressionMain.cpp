@@ -14,7 +14,30 @@ std::map<unsigned int, double> Heuristic::heuristicValues;
 
 static const unsigned int PREDICTION_FLIP_VALUE = 30;
 
-void decompressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
+struct DecompressionInfo {
+    std::string formulaName;
+    std::string modelName;
+
+    unsigned int formulaSize;
+    unsigned int numberVariables;
+    double parsingTime;
+    double overallTime;
+
+    explicit DecompressionInfo(unsigned int formulaSize, unsigned int numberVariables, double parsingTime, double overallTime) : 
+                            formulaSize(formulaSize), numberVariables(numberVariables), parsingTime(parsingTime), overallTime(overallTime) {
+    }
+
+    void addNames(const std::string formulaName_, const std::string modelName_) {
+        formulaName = formulaName_;
+        modelName = modelName_;
+    }
+
+};
+
+DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
+    //set start time
+    const auto startTime = std::chrono::high_resolution_clock::now();
+
     Parser parser(formulaFile, modelFile);
 
     std::vector<Cl> clauses = parser.readClauses();
@@ -24,6 +47,9 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
     std::cout << "Number of Variables: " << variables.size() << std::endl;
     std::cout << "Number of Clauses: " << clauses.size() << std::endl;
     std::cout << "Number of distances: " << compresssionDistances.size() << std::endl;
+
+     //measure parsing time
+    const auto parsingTime = std::chrono::high_resolution_clock::now();
 
     //build occurence list
     for (Cl& clause: clauses) {
@@ -174,6 +200,18 @@ void decompressModel(const char* formulaFile, const char* modelFile, const char*
     outputFileStream.close();
 
     delete heuristic;
+
+    //get overall execution time
+    const auto overallTime = std::chrono::high_resolution_clock::now();
+
+    //calculate durations
+    std::chrono::duration<double, std::milli> parsingDuration = parsingTime - startTime;
+    std::chrono::duration<double, std::milli> overallDuration = overallTime - startTime;
+
+    DecompressionInfo info(clauses.size(), variables.size(), parsingDuration.count(), overallDuration.count());
+
+    return info;
+
 }
 
 
@@ -199,6 +237,8 @@ int main(int argc, char** argv) {
         fs::directory_iterator modelIterator(modelPath);
 
         for (fs::directory_entry modelsEntry: modelIterator) {
+            std::vector<DecompressionInfo> infos;
+
             if (modelsEntry.is_directory()) {
                 std::string instanceName = modelsEntry.path().filename();
 
@@ -224,9 +264,27 @@ int main(int argc, char** argv) {
 
                     std::cout << "Deompress model: " << model.path() << std::endl;
 
-                    decompressModel(instanceFileString.c_str(), modelFileString.c_str(), outputFileString.c_str());
+                    DecompressionInfo info = decompressModel(instanceFileString.c_str(), modelFileString.c_str(), outputFileString.c_str());
+                    info.addNames(instanceName, modelName);
+                    infos.push_back(info);
 
                     std::cout << "Done." << std::endl;
+                }
+
+                //write the statistics to a csv file
+                fs::path statisticsFile = outputPath;
+                statisticsFile.append("statistics");
+                statisticsFile.replace_extension(".csv");
+                std::string statisticsFileString(statisticsFile);
+
+                std::ofstream outputFile(statisticsFileString.c_str());
+
+                //write the headers
+                outputFile << "Instance, Model, Clauses count, Variables count, Parsing time, Execution time\n";
+
+                //write the values
+                for (DecompressionInfo stat: infos) {
+                    outputFile << stat.formulaName << ", " << stat.modelName << ", " << stat.formulaSize << ", " << stat.numberVariables << ", " << stat.parsingTime << ", " << stat.overallTime << "\n";
                 }
             }
         }
