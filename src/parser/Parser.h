@@ -126,11 +126,14 @@ public:
         //decompress the string and write the contents to a temporary file
         std::string decompressedString = StringCompression::golombRiceDecompression(compressedString);
 
-        std::ofstream temporaryFileStream("tmpModel.txt");
+        std::string modelFilenameString(modelFilename);
+        std::string temporaryFileName = modelFilenameString.substr(0, modelFilenameString.size() - 4) + "_tmp.txt";
+
+        std::ofstream temporaryFileStream(temporaryFileName.c_str());
         temporaryFileStream << decompressedString;
         temporaryFileStream.close();
 
-        StreamBuffer reader("tmpModel.txt");
+        StreamBuffer reader(temporaryFileName.c_str());
         std::deque<uint64_t> distances;
         uint64_t currentDistance;
 
@@ -139,7 +142,7 @@ public:
         }
 
         //delete the temporary file
-        fs::path temoraryPath("tmpModel.txt");
+        fs::path temoraryPath(temporaryFileName.c_str());
         fs::remove(temoraryPath);
         
         return distances;

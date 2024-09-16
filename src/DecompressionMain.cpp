@@ -130,6 +130,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
             //check if the prediction model has to be flipped
             if (missesCounter == (PREDICTION_FLIP_VALUE - 1)) {
                 flipPredictionModel = !flipPredictionModel;
+                std::cout << "Prediction model was flipped" << std::endl;
             }
             
             if (compresssionDistances.empty()) {
