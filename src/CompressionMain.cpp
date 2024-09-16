@@ -16,7 +16,7 @@ namespace fs = std::filesystem;
 
 std::map<unsigned int, double> Heuristic::heuristicValues;
 
-static const unsigned int PREDICTION_FLIP_VALUE = 30;
+static const unsigned int PREDICTION_FLIP_VALUE = 5;
 
 CompressionInfo compressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
     //set start time

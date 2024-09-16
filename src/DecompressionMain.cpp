@@ -12,7 +12,7 @@ namespace fs = std::filesystem;
 
 std::map<unsigned int, double> Heuristic::heuristicValues;
 
-static const unsigned int PREDICTION_FLIP_VALUE = 30;
+static const unsigned int PREDICTION_FLIP_VALUE = 5;
 
 struct DecompressionInfo {
     std::string formulaName;
@@ -79,9 +79,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
         currentDistance = compresssionDistances.front();
         compresssionDistances.pop_front();
 
-        if (currentDistance == 0) {
-            missesCounter += 1;
-        }
+        
     }
 
     std::vector<Assignment> values(variables.size(), Assignment::OPEN);
@@ -99,6 +97,11 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
                 currentDistance -= 1;
             }
         }
+
+        //reset the number of misses if the current distance is over 1
+        if (currentDistance != 0) {
+                    missesCounter = 0;
+                }
 
         Var& propVar = variables[nextVar.id - 1];
 
@@ -120,6 +123,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
         }
 
         if (!allDistancesUsed && currentDistance == 0) {
+
             //invert the assignment
             if (values[nextVar.id - 1] == Assignment::TRUE) {
                 values[nextVar.id - 1] = Assignment::FALSE;
@@ -127,8 +131,10 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
                 values[nextVar.id - 1] = Assignment::TRUE;
             }
 
+            missesCounter += 1;
+
             //check if the prediction model has to be flipped
-            if (missesCounter == (PREDICTION_FLIP_VALUE - 1)) {
+            if (missesCounter == PREDICTION_FLIP_VALUE) {
                 flipPredictionModel = !flipPredictionModel;
                 std::cout << "Prediction model was flipped" << std::endl;
             }
@@ -138,12 +144,6 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
             } else {
                 currentDistance = compresssionDistances.front();
                 compresssionDistances.pop_front();
-
-                if (currentDistance == 0) {
-                    missesCounter += 1;
-                } else {
-                    missesCounter = 0;
-                }
             }
         } else if (!allDistancesUsed) {
             currentDistance -= 1;
@@ -234,11 +234,12 @@ int main(int argc, char** argv) {
         std::cout << "Done." << std::endl;
         return 0;
     } else if (fs::is_directory(formulaPath) && fs::is_directory(modelPath) && fs::is_directory(outputPath)) {
+        std::vector<DecompressionInfo> infos;
+
         //iterate over the subdirectories in the models directory
         fs::directory_iterator modelIterator(modelPath);
 
         for (fs::directory_entry modelsEntry: modelIterator) {
-            std::vector<DecompressionInfo> infos;
 
             if (modelsEntry.is_directory()) {
                 std::string instanceName = modelsEntry.path().filename();
@@ -271,23 +272,23 @@ int main(int argc, char** argv) {
 
                     std::cout << "Done." << std::endl;
                 }
-
-                //write the statistics to a csv file
-                fs::path statisticsFile = outputPath;
-                statisticsFile.append("statistics");
-                statisticsFile.replace_extension(".csv");
-                std::string statisticsFileString(statisticsFile);
-
-                std::ofstream outputFile(statisticsFileString.c_str());
-
-                //write the headers
-                outputFile << "Instance, Model, Clauses count, Variables count, Parsing time, Execution time\n";
-
-                //write the values
-                for (DecompressionInfo stat: infos) {
-                    outputFile << stat.formulaName << ", " << stat.modelName << ", " << stat.formulaSize << ", " << stat.numberVariables << ", " << stat.parsingTime << ", " << stat.overallTime << "\n";
-                }
             }
+        }
+
+        //write the statistics to a csv file
+        fs::path statisticsFile = outputPath;
+        statisticsFile.append("statistics");
+        statisticsFile.replace_extension(".csv");
+        std::string statisticsFileString(statisticsFile);
+
+        std::ofstream outputFile(statisticsFileString.c_str());
+
+        //write the headers
+        outputFile << "Instance, Model, Clauses count, Variables count, Parsing time, Execution time\n";
+
+        //write the values
+        for (DecompressionInfo stat: infos) {
+            outputFile << stat.formulaName << ", " << stat.modelName << ", " << stat.formulaSize << ", " << stat.numberVariables << ", " << stat.parsingTime << ", " << stat.overallTime << "\n";
         }
 
     } else {
