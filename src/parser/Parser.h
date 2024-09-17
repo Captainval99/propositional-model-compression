@@ -117,6 +117,8 @@ public:
     }
 
     std::deque<uint64_t> readCompressedFile() {
+        std::deque<uint64_t> distances;
+
         //read the whole file into a string
         std::ifstream compressedFile(modelFilename);
         std::stringstream buffer;
@@ -126,24 +128,28 @@ public:
         //decompress the string and write the contents to a temporary file
         std::string decompressedString = StringCompression::golombRiceDecompression(compressedString);
 
-        std::string modelFilenameString(modelFilename);
-        std::string temporaryFileName = modelFilenameString.substr(0, modelFilenameString.size() - 4) + "_tmp.txt";
+        if (!decompressedString.empty()) {
+            std::string modelFilenameString(modelFilename);
+            std::string temporaryFileName = modelFilenameString.substr(0, modelFilenameString.size() - 4) + "_tmp.txt";
 
-        std::ofstream temporaryFileStream(temporaryFileName.c_str());
-        temporaryFileStream << decompressedString;
-        temporaryFileStream.close();
+            //std::cout << "temporaryFileName: " << temporaryFileName << std::endl;
+            //std::cout << "decompressed string: " << decompressedString << std::endl;
 
-        StreamBuffer reader(temporaryFileName.c_str());
-        std::deque<uint64_t> distances;
-        uint64_t currentDistance;
+            std::ofstream temporaryFileStream(temporaryFileName.c_str());
+            temporaryFileStream << decompressedString;
+            temporaryFileStream.close();
 
-        while (reader.readUInt64(&currentDistance)) {
-            distances.push_back(currentDistance);
+            StreamBuffer reader(temporaryFileName.c_str());
+            uint64_t currentDistance;
+
+            while (reader.readUInt64(&currentDistance)) {
+                distances.push_back(currentDistance);
+            }
+
+            //delete the temporary file
+            fs::path temoraryPath(temporaryFileName.c_str());
+            fs::remove(temoraryPath);
         }
-
-        //delete the temporary file
-        fs::path temoraryPath(temporaryFileName.c_str());
-        fs::remove(temoraryPath);
         
         return distances;
     }

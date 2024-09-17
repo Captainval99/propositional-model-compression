@@ -91,6 +91,7 @@ class StreamBuffer {
         archive_read_support_filter_all(file);
         // archive_read_support_format_raw(file);
         archive_read_support_format_raw(file);
+        archive_read_support_format_empty(file);
         int r = archive_read_open_filename(file, filename, buffer_size);
         if (r != ARCHIVE_OK) {
             throw ParserException(std::string(archive_error_string(file)) + std::string(" Error opening file: ") + std::string(filename));

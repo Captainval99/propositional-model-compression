@@ -122,7 +122,7 @@ namespace StringCompression {
         uint32_t head = 0;
         std::string output;
 
-        bool calculateQ;
+        bool calculateQ = true;
         uint32_t currentQ = 0;
         uint32_t currentR = 0;
         uint8_t offset = 0;
@@ -175,6 +175,8 @@ namespace StringCompression {
                         offset += lengthR;
                     }
                     //calculate and push the final value
+                    //std::cout << "Q: " << currentQ << ", R: " << currentR << std::endl;
+
                     uint32_t finalValue = currentQ * std::pow(2, GOLOMB_RICE_PARAM) + currentR;
                     output.append(std::to_string(finalValue));
                     output.append(" ");
@@ -192,7 +194,10 @@ namespace StringCompression {
                 }
             }
         }
-        output.pop_back();
+        if (output.size() > 0) {
+            output.pop_back();
+        }
+
         return output;
     }
 }

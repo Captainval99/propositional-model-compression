@@ -48,6 +48,12 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
     std::cout << "Number of Clauses: " << clauses.size() << std::endl;
     std::cout << "Number of distances: " << compresssionDistances.size() << std::endl;
 
+    std::cout << "Diff encoding: ";
+    for (uint32_t i: compresssionDistances) {
+    	std::cout << i << ", ";
+    }
+    std::cout << std::endl;
+
      //measure parsing time
     const auto parsingTime = std::chrono::high_resolution_clock::now();
 
