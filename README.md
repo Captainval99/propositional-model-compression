@@ -49,12 +49,6 @@ The names of the subdirectories have to be identcal to the names of the .cnf fil
  ## Parameters
  The algorithms can be configured using multiple parameters. **The parameters must be the same for the compression and decompression in order to decompress correctly.**  
 
- <style>
-table td {
-  vertical-align: top;
-}
-</style>
-
 | Parameter | Description                       | Possible values | Default value |
 | --------- | -----------                       | --------------- | ------------- |
 | -h        | Ordering heuristic                | <ul><li>**none**: No heuristic</li><li>**jewa**: Jeroslow-Wang static</li><li>**jewa_dyn**: Jeroslow-Wang dynamic</li><li>**moms**: MOMS static</li><li>**moms_dyn**: MOMS dynamic</li></ul>| Jeroslow-Wang dynamic |
