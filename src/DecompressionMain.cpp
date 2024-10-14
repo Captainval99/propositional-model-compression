@@ -12,7 +12,17 @@ namespace fs = std::filesystem;
 
 std::map<unsigned int, double> Heuristic::heuristicValues;
 
-static const unsigned int PREDICTION_FLIP_VALUE = 5;
+struct DecompressionSetup
+{
+    std::string heuristic;
+    std::string genericCompression;
+    double momsParameter;
+    unsigned int golombRiceParameter;
+    unsigned int predictionFlip;
+
+    explicit DecompressionSetup() : heuristic("jewa_dyn"), genericCompression("golrice"), momsParameter(10.0), golombRiceParameter(2), predictionFlip(5) {}
+};
+
 
 struct DecompressionInfo {
     std::string formulaName;
@@ -34,7 +44,7 @@ struct DecompressionInfo {
 
 };
 
-DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile, const char* outputFile) {
+DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile, const char* outputFile, DecompressionSetup setup) {
     //set start time
     const auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -42,7 +52,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
 
     std::vector<Cl> clauses = parser.readClauses();
     std::vector<Var> variables = parser.readVariables();
-    std::deque<uint64_t> compresssionDistances = parser.readCompressedFile();
+    std::deque<uint64_t> compresssionDistances = parser.readCompressedFile(setup.genericCompression, setup.golombRiceParameter, variables.size());
 
     std::cout << "Number of Variables: " << variables.size() << std::endl;
     std::cout << "Number of Clauses: " << clauses.size() << std::endl;
@@ -70,9 +80,25 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
         }
     }
 
+    Heuristic* heuristic;
+
     //create Heuristic object to sort the variables using a specific heuristic
+    if (setup.heuristic == "none") {
+        heuristic = new ParsingOrder(variables);
+    } else if (setup.heuristic == "jewa") {
+        heuristic = new JeroslowWang(variables, false);
+    } else if (setup.heuristic == "jewa_dyn") {
+        heuristic = new JeroslowWang(variables, true);
+    } else if (setup.heuristic == "moms") {
+        heuristic = new MomsFreeman(variables, clauses, false, setup.momsParameter);
+    } else if (setup.heuristic == "moms_dyn") {
+        heuristic = new MomsFreeman(variables, clauses, true, setup.momsParameter);
+    } else {
+        throw std::runtime_error("Unknown heuristic: " + setup.heuristic);
+    }
+
     //Heuristic* heuristic = new MomsFreeman(variables, clauses, true);
-    Heuristic* heuristic = new JeroslowWang(variables, true);
+    //Heuristic* heuristic = new JeroslowWang(variables, true);
     bool allSatisfied = false;
     bool allDistancesUsed = false;
     uint64_t currentDistance;
@@ -140,7 +166,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
             missesCounter += 1;
 
             //check if the prediction model has to be flipped
-            if (missesCounter == PREDICTION_FLIP_VALUE) {
+            if (missesCounter == setup.predictionFlip) {
                 flipPredictionModel = !flipPredictionModel;
                 std::cout << "Prediction model was flipped" << std::endl;
             }
@@ -223,19 +249,43 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
 
 
 int main(int argc, char** argv) {
-    if (argc != 4) {
-        throw std::runtime_error("Wrong number of arguments: " + std::to_string(argc - 1) + ", expected 3 arguments.");
+    if (argc < 4) {
+        throw std::runtime_error("Wrong number of arguments: " + std::to_string(argc - 1) + ", expected at least 3 arguments.");
+    } else if ((argc % 2) != 0) {
+        throw std::runtime_error("Wrong number of arguments.");
     }
 
     fs::path formulaPath(argv[1]);
     fs::path modelPath(argv[2]);
     fs::path outputPath(argv[3]);
 
+    DecompressionSetup setup;
+
+    if (argc > 4) {
+        for (int i = 4; i < argc; i += 2) {
+            std::string argString = std::string(argv[i]);
+
+            if (argString == "-h") {
+                setup.heuristic = std::string(argv[i + 1]);
+            } else if (argString == "-c") {
+                setup.genericCompression = std::string(argv[i + 1]);
+            } else if (argString == "-mp") {
+                setup.momsParameter = atof(argv[i + 1]);
+            } else if (argString == "-grp") {
+                setup.golombRiceParameter = std::stoi(argv[i + 1]);
+            } else if (argString == "-p") {
+                setup.predictionFlip = std::stoi(argv[i + 1]);
+            } else {
+                throw std::runtime_error("Unknown argment: " + argString);
+            }
+        }
+    }
+
     //input is files so only one compression has to be done
     if (fs::is_regular_file(formulaPath) && fs::is_regular_file(modelPath)) {
         std::cout << "Decompress model: " << modelPath << std::endl;
         
-        decompressModel(argv[1], argv[2], argv[3]);
+        decompressModel(argv[1], argv[2], argv[3], setup);
 
         std::cout << "Done." << std::endl;
         return 0;
@@ -272,7 +322,7 @@ int main(int argc, char** argv) {
 
                     std::cout << "Deompress model: " << model.path() << std::endl;
 
-                    DecompressionInfo info = decompressModel(instanceFileString.c_str(), modelFileString.c_str(), outputFileString.c_str());
+                    DecompressionInfo info = decompressModel(instanceFileString.c_str(), modelFileString.c_str(), outputFileString.c_str(), setup);
                     info.addNames(instanceName, modelName);
                     infos.push_back(info);
 

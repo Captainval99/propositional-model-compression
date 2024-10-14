@@ -121,7 +121,7 @@ class JeroslowWang: public Heuristic {
 
 class MomsFreeman: public Heuristic {
     private:
-        const double MOMS_PARAMETER = std::pow(2, 10.0);
+        double momsParameter;
         unsigned int minClauseLength;
         std::vector<Cl>& clauses;
         unsigned int nrMinClauses = 0;
@@ -142,7 +142,7 @@ class MomsFreeman: public Heuristic {
                 }
             }
 
-            unsigned int heuristicValue = (posCount + negCount) * MOMS_PARAMETER + posCount * negCount;
+            unsigned int heuristicValue = (posCount + negCount) * momsParameter + posCount * negCount;
 
             heuristicValues[variable.id] = heuristicValue;
         }
@@ -176,7 +176,9 @@ class MomsFreeman: public Heuristic {
         }
 
         public:
-            explicit MomsFreeman(std::vector<Var> variables, std::vector<Cl>& clauses, bool dynamic) : Heuristic(variables, dynamic), clauses(clauses) {
+            explicit MomsFreeman(std::vector<Var> variables, std::vector<Cl>& clauses, bool dynamic, double parameter) : Heuristic(variables, dynamic), clauses(clauses) {
+                momsParameter = std::pow(2, parameter);
+                
                 findMinClauseLength();
                 
                 for (Var var: variables) {
@@ -217,7 +219,7 @@ class MomsFreeman: public Heuristic {
                                 }
                             }
 
-                            heuristicValues[var.id] -= MOMS_PARAMETER - count; 
+                            heuristicValues[var.id] -= momsParameter - count; 
 
                             variablesHeap.increase(var);
                         }

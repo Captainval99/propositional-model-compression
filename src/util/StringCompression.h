@@ -9,7 +9,6 @@
 #include <math.h>
 
 namespace StringCompression {
-    const unsigned int GOLOMB_RICE_PARAM = 2;
 
     std::string compressString(std::string input) {
         std::stringstream original;
@@ -56,14 +55,14 @@ namespace StringCompression {
         return decompressedString;
     }
 
-    std::vector<char> golombRiceCompression(std::vector<uint32_t> input) {
-        uint32_t moduloBitMask = UINT32_MAX >> (32 - GOLOMB_RICE_PARAM);
+    std::vector<char> golombRiceCompression(std::vector<uint32_t> input, unsigned int parameter) {
+        uint32_t moduloBitMask = UINT32_MAX >> (32 - parameter);
         std::vector<char> output;
         uint32_t offset = 0;
         uint8_t currentByte = 0;
 
         for (uint32_t i: input) {
-            uint32_t q = i >> GOLOMB_RICE_PARAM;
+            uint32_t q = i >> parameter;
             uint32_t r = i & moduloBitMask;
 
             // write q
@@ -91,13 +90,13 @@ namespace StringCompression {
             }
             
             //write r
-            if (offset + GOLOMB_RICE_PARAM < 8) {
-                currentByte = currentByte | (r << (8 - offset - GOLOMB_RICE_PARAM));
-                offset += GOLOMB_RICE_PARAM;
+            if (offset + parameter < 8) {
+                currentByte = currentByte | (r << (8 - offset - parameter));
+                offset += parameter;
             } else {
-                currentByte = currentByte | (r >> (GOLOMB_RICE_PARAM - (8 - offset)));
+                currentByte = currentByte | (r >> (parameter - (8 - offset)));
                 output.push_back(currentByte);
-                uint32_t remainingLength = GOLOMB_RICE_PARAM - (8 - offset);
+                uint32_t remainingLength = parameter - (8 - offset);
 
                 uint32_t fullBytes = remainingLength >> 3; // remainingLenth / 8
                 uint32_t remainder = remainingLength % 8;
@@ -117,7 +116,7 @@ namespace StringCompression {
         return output;
     }
 
-    std::string golombRiceDecompression(std::string input) {
+    std::string golombRiceDecompression(std::string input, unsigned int parameter) {
         const char* inputArray = input.c_str();
         uint32_t head = 0;
         std::string output;
@@ -156,7 +155,7 @@ namespace StringCompression {
                 }
                 
             } else {
-                uint32_t lengthR = GOLOMB_RICE_PARAM - offsetR;
+                uint32_t lengthR = parameter - offsetR;
                 //fill the already processed bits with 0s
                 currentByte = currentByte & (0xFF >> offset);
                 //check if r lies completely in the current byte
@@ -177,7 +176,7 @@ namespace StringCompression {
                     //calculate and push the final value
                     //std::cout << "Q: " << currentQ << ", R: " << currentR << std::endl;
 
-                    uint32_t finalValue = currentQ * std::pow(2, GOLOMB_RICE_PARAM) + currentR;
+                    uint32_t finalValue = currentQ * std::pow(2, parameter) + currentR;
                     output.append(std::to_string(finalValue));
                     output.append(" ");
                     currentQ = 0;

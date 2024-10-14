@@ -116,7 +116,7 @@ public:
         return variables;
     }
 
-    std::deque<uint64_t> readCompressedFile() {
+    std::deque<uint64_t> readCompressedFile(std::string genericCompression, unsigned int golombRiceParameter, unsigned int variablesSize) {
         std::deque<uint64_t> distances;
 
         //read the whole file into a string
@@ -126,7 +126,17 @@ public:
         std::string compressedString = buffer.str();
 
         //decompress the string and write the contents to a temporary file
-        std::string decompressedString = StringCompression::golombRiceDecompression(compressedString);
+        std::string decompressedString;
+
+        if (genericCompression == "golrice") {
+            decompressedString = StringCompression::golombRiceDecompression(compressedString, golombRiceParameter);
+        } else if (genericCompression == "zip") {
+            decompressedString = StringCompression::decompressString(compressedString);
+        } else if (genericCompression == "lz4") {
+            decompressedString = StringCompression::lz4Decompression(compressedString, variablesSize * 3);
+        } else {
+            throw std::runtime_error("Unknown compression algorithm: " + genericCompression);
+        }
 
         if (!decompressedString.empty()) {
             std::string modelFilenameString(modelFilename);
