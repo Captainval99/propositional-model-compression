@@ -66,12 +66,10 @@ struct ModelVar
 struct Var
 {
     unsigned int id;
-    unsigned int nrPosOcc;
-    unsigned int nrNegOcc;
     std::vector<Cl*> posOccList;
     std::vector<Cl*> negOccList; 
 
-    Var(unsigned int id) : id(id), nrPosOcc(0), nrNegOcc(0) {}
+    Var(unsigned int id) : id(id) {}
 
     bool operator< (Var var) const {
         return id < var.id;
@@ -83,12 +81,10 @@ struct Var
 
     void addPosClause(Cl* clause) {
         posOccList.push_back(clause);
-        nrPosOcc += 1;
     }
 
     void addNegClause(Cl* clause) {
         negOccList.push_back(clause);
-        nrNegOcc += 1;
     }
 
     operator int() const {

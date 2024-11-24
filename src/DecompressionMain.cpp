@@ -140,7 +140,9 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
         
         
         //assign the variable according to the prediciton model and invert it if necessary
-        if (propVar.nrPosOcc >= propVar.nrNegOcc) {
+        Assignment predictionValue = heuristic->getPredictedAssignment(propVar);
+
+        if (predictionValue == Assignment::TRUE) {
             if (flipPredictionModel) {
                 values[nextVar.id - 1] = Assignment::FALSE;
             } else {

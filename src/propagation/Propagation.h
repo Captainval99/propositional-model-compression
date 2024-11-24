@@ -37,17 +37,6 @@ namespace Propagation {
             int i = 1;
             //iterate over the clauses that are satisfied and clear them and update the counters and the heuristic
             for (Cl* clause: satOccList) {
-                //std::cout << "sat occ list: " << i++ << std::endl;
-                for (Lit lit: clause->literals) {
-                    Var& satVar = variables.at(lit.id - 1);
-
-                    if(lit.negative) {
-                        satVar.nrNegOcc -= 1;
-                    } else {
-                        satVar.nrPosOcc -= 1;
-                    }
-                }
-
                 heuristic->updateVariables(clause);
 
                 clause->literals.clear();

@@ -59,6 +59,9 @@ class Heuristic {
 };
 
 class ParsingOrder: public Heuristic {
+    private:
+        std::vector<unsigned int> posOccurences;
+        std::vector<unsigned int> negOccurences;
     public:
         ParsingOrder(std::vector<Var> variables) : Heuristic(variables, false) {
             for (Var var: variables) {
@@ -66,8 +69,11 @@ class ParsingOrder: public Heuristic {
                 heuristicValues[var.id] = var.id * -1.0;
                 variablesHeap.insert(var);
 
+                posOccurences.push_back(var.posOccList.size());
+                negOccurences.push_back(var.negOccList.size());
+
                 //predict the assignment based on the occurence counts
-                if (var.nrPosOcc >= var.nrNegOcc) {
+                if (var.posOccList.size() >= var.negOccList.size()) {
                     predictedAssignments.push_back(Assignment::TRUE);
                 } else {
                     predictedAssignments.push_back(Assignment::FALSE);
@@ -75,7 +81,22 @@ class ParsingOrder: public Heuristic {
             }
         }
 
-        void updateVariables(Cl* clause) {}
+        void updateVariables(Cl* clause) {
+            //update the assignment predictions but not the heuristic values
+            for (Lit lit: clause->literals) {
+                if (lit.negative) {
+                    negOccurences[lit.id - 1] -= 1;
+                } else {
+                    posOccurences[lit.id - 1] -= 1;
+                }
+
+                if (posOccurences[lit.id - 1] >= negOccurences[lit.id - 1]) {
+                    predictedAssignments[lit.id - 1] = Assignment::TRUE;
+                } else {
+                    predictedAssignments[lit.id - 1] = Assignment::FALSE;
+                }
+            }
+        }
 };
 
 class JeroslowWang: public Heuristic {
@@ -226,9 +247,9 @@ class MomsFreeman: public Heuristic {
 
         void setPredictedAssignment(Var var) {
             if (posCounts[var.id - 1] >= negCounts[var.id - 1]) {
-                predictedAssignments[var.id - 1] = Assignment::TRUE;
+                predictedAssignments.push_back(Assignment::TRUE);
             } else {
-                predictedAssignments[var.id - 1] = Assignment::FALSE;
+                predictedAssignments.push_back(Assignment::FALSE);
             }
         }
 
