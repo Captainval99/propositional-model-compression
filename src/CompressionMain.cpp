@@ -125,7 +125,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         //check if the model value matches the prediction model
         Var& propVar = variables[modelVar.id - 1];
-        if ((modelVar.assignment == Assignment::FALSE && propVar.nrPosOcc >= propVar.nrNegOcc) || (modelVar.assignment == Assignment::TRUE && propVar.nrPosOcc < propVar.nrNegOcc)) {
+        Assignment predictionValue = heuristic->getPredictedAssignment(propVar);
+        if (modelVar.assignment != predictionValue) {
             bitvector.push_back(false != flipPredictionModel);
             if (!flipPredictionModel) {
                 predictionDistance += 1;
