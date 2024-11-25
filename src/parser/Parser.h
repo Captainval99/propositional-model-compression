@@ -59,8 +59,15 @@ public:
         std::map<unsigned int, ModelVar> model;
 
         while (reader.skipWhitespace()) {
-            if (*reader == 'v') {
+            if (*reader == 'c') {
+                if (!reader.skipLine()) {
+                    break;
+                } else {
+                    continue;
+                }
+            } else if (!(*reader == '-') && !std::isdigit(*reader)) {
                 reader.skip();
+                continue;
             }
 
             int assignment;

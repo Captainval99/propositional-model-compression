@@ -218,6 +218,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
         Var var = variables[i];
 
         if (values[i] == Assignment::OPEN) {
+            outputFileStream << "D ";
             continue;
         } else if (values[i] == Assignment::FALSE) {
             outputFileStream << "-";
