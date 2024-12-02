@@ -94,6 +94,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     uint64_t nrPredictions = 0;
     uint64_t predictionDistance = 0;
     bool flipPredictionModel = false;
+    std::vector<unsigned int> dontCareVars;
 
     std::vector<Assignment> values(variables.size(), Assignment::OPEN);
     std::vector<unsigned int> trail;
@@ -104,10 +105,15 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         Var nextVar = heuristic->getNextVar();
         //std::cout << "nextVar: " << nextVar.id << std::endl;
 
-        //get next value if the variable is already assigned or no model value exists
-        while ((values[nextVar.id -1] != Assignment::OPEN) || !model.count(nextVar.id)) {
+        //get next value if the variable is already assigned
+        while (values[nextVar.id -1] != Assignment::OPEN) {
             nextVar = heuristic->getNextVar();
-            bitvector.push_back(true);
+        }
+
+        //if no model value exists for the variable it is assigned according to the prediction model
+        if (!model.count(nextVar.id)) {
+            values[nextVar.id - 1] = heuristic->getPredictedAssignment(nextVar);
+            dontCareVars.push_back(nextVar.id);
         }
 
         //check if the prediction model has to be flipped
@@ -173,7 +179,10 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     std::vector<uint32_t> outputEncoding = BitvectorEncoding::diffEncoding(bitvector);
 
-    //create output stream for the output file
+    //append the ids of the propaged don't care variables
+    outputEncoding.insert(outputEncoding.end(), dontCareVars.begin(), dontCareVars.end());
+    
+
     std::ofstream outputFileStream(outputFile);
 
     std::vector<char> compressedEncoding;
