@@ -114,7 +114,12 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         if (!model.count(nextVar.id)) {
             values[nextVar.id - 1] = heuristic->getPredictedAssignment(nextVar);
             dontCareVars.push_back(nextVar.id);
+        } else {
+            ModelVar modelVar = model.at(nextVar.id);
+            values[modelVar.id - 1] = modelVar.assignment;
         }
+
+        trail.push_back(nextVar.id);
 
         //check if the prediction model has to be flipped
         if (predictionDistance == setup.predictionFlip) {
@@ -124,15 +129,11 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
         nrPredictions += 1;
         
-        ModelVar modelVar = model.at(nextVar.id);
-
-        values[modelVar.id - 1] = modelVar.assignment;
-        trail.push_back(modelVar.id);
 
         //check if the model value matches the prediction model
-        Var& propVar = variables[modelVar.id - 1];
+        Var& propVar = variables[nextVar.id - 1];
         Assignment predictionValue = heuristic->getPredictedAssignment(propVar);
-        if (modelVar.assignment != predictionValue) {
+        if (values[nextVar.id - 1] != predictionValue) {
             bitvector.push_back(false != flipPredictionModel);
             if (!flipPredictionModel) {
                 predictionDistance += 1;

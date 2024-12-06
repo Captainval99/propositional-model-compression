@@ -186,7 +186,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
         trail.push_back(propVar.id);
 
 
-        //std::cout << "Assigned Variable: " << propVar.id << " with " << values[propVar.id - 1] << std::endl;
+        std::cout << "Assigned Variable: " << propVar.id << " with " << values[propVar.id - 1] << std::endl;
 
         //propagate the new assigned variable
         Propagation::propagate(clauses, variables, trail, head, heuristic, values);
@@ -208,11 +208,16 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
 
     std::cout << "prediction flip: " << flipPredictionModel << std::endl; 
 
+    //iterate over the propagated don't care variables and reset their assignment to don't care
+    for (uint64_t dontCareVar: compresssionDistances) {
+        values[dontCareVar - 1] = Assignment::OPEN;
+    }
+
 
     //write the decompressed model to the output file
     std::ofstream outputFileStream(outputFile);
 
-    //outputFileStream << "v ";
+    outputFileStream << "v ";
 
     for (int i = 0; i < variables.size(); i++) {
         Var var = variables[i];
