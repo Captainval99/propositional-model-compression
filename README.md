@@ -51,8 +51,9 @@ The names of the subdirectories have to be identcal to the names of the .cnf fil
 
 | Parameter | Description                       | Possible values | Default value |
 | --------- | -----------                       | --------------- | ------------- |
-| -h        | Ordering heuristic                | <ul><li>**none**: No heuristic</li><li>**jewa**: Jeroslow-Wang static</li><li>**jewa_dyn**: Jeroslow-Wang dynamic</li><li>**moms**: MOMS static</li><li>**moms_dyn**: MOMS dynamic</li></ul>| Jeroslow-Wang dynamic |
+| -h        | Ordering heuristic                | <ul><li>**none**: No heuristic</li><li>**jewa**: Jeroslow-Wang static</li><li>**jewa_dyn**: Jeroslow-Wang dynamic</li><li>**moms**: MOMS static</li><li>**moms_dyn**: MOMS dynamic</li><li>**hybr**: Hybrid heuristic static</li><li>**hybr_dyn**: Hybrid heuristic dynamic</li></ul>| Jeroslow-Wang dynamic |
 | -c        | Generic compression algorithm     | <ul><li>**golrice**: Golomb-Rice coding</li><li>**zip**: ZIP compression</li><li>**lz4**: LZ4 compression</li></ul>| Golomb-Rice coding |
 | -mp       | MOMS heuristic parameter <br> (Only necessary if MOMS is selected)        | Any double value | 10.0 |
 | -grp      | Golomb-Rice compression parameter <br> (Only necessary if Golomb-Rice is selected) | Integer value, must be a power of two | 2 |
 | -p        | Prediction model inversion value  | Any positive integer value | 5 |
+| -hp       | Hybrid heuristic cutoff parameter | Any positive integer value | TODO |

@@ -19,6 +19,7 @@ struct DecompressionSetup
     double momsParameter;
     unsigned int golombRiceParameter;
     unsigned int predictionFlip;
+    unsigned int hybridHeuristicParam;
 
     explicit DecompressionSetup() : heuristic("jewa_dyn"), genericCompression("golrice"), momsParameter(10.0), golombRiceParameter(2), predictionFlip(5) {}
 };
@@ -93,6 +94,10 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
         heuristic = new MomsFreeman(variables, clauses, false, setup.momsParameter);
     } else if (setup.heuristic == "moms_dyn") {
         heuristic = new MomsFreeman(variables, clauses, true, setup.momsParameter);
+    } else if (setup.heuristic == "hybr") {
+        heuristic = new HybridHeuristic(variables, false, setup.hybridHeuristicParam);
+    } else if (setup.heuristic == "hybr_dyn") {
+        heuristic = new HybridHeuristic(variables, true, setup.hybridHeuristicParam);
     } else {
         throw std::runtime_error("Unknown heuristic: " + setup.heuristic);
     }
@@ -283,6 +288,8 @@ int main(int argc, char** argv) {
                 setup.golombRiceParameter = std::stoi(argv[i + 1]);
             } else if (argString == "-p") {
                 setup.predictionFlip = std::stoi(argv[i + 1]);
+            } else if (argString == "-hp") {
+                setup.hybridHeuristicParam = std::stoi(argv[i + 1]);
             } else {
                 throw std::runtime_error("Unknown argment: " + argString);
             }
