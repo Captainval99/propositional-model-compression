@@ -181,6 +181,8 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
         }
     }
 
+    unsigned int propagatedDontCareVars = dontCareVars.size();
+
     //predict assignemts for the rest of the variables
     while (heuristic->hasNextVar()) {
         Var nextVar = heuristic->getNextVar();
@@ -196,6 +198,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
             bitvector.push_back(modelVar.assignment == prediction);
         } else {
             bitvector.push_back(true);
+            dontCareVars.push_back(nextVar.id);
         }
 
     }
@@ -262,7 +265,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     float predictionHitRate = (float) predictionMisses / nrPredictions;
     predictionHitRate = 1.0 - predictionHitRate;
 
-    CompressionInfo info(clauses.size(), model.size(), variables.size(), modelFileSize, compressionFileSize, bitvector.size(), outputEncoding.size(), predictionHitRate, parsingDuration.count(), overallDuration.count());
+    CompressionInfo info(clauses.size(), model.size(), variables.size(), modelFileSize, compressionFileSize, bitvector.size(), outputEncoding.size(), propagatedDontCareVars, predictionHitRate, parsingDuration.count(), overallDuration.count());
     return info;
 }
 
