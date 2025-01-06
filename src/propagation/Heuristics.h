@@ -56,6 +56,10 @@ class Heuristic {
         Assignment getPredictedAssignment(Var var) {
             return predictedAssignments[var.id - 1];
         }
+
+        bool hasNextVar() {
+            return !variablesHeap.empty();
+        }
 };
 
 class ParsingOrder: public Heuristic {

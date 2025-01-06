@@ -123,7 +123,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
     std::vector<unsigned int> trail;
     int head = 0;
 
-    while (!allSatisfied) {
+    while (heuristic->hasNextVar()) {
         //get next value from the model and assign it to the variable
         Var nextVar = heuristic->getNextVar();
 
