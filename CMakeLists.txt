@@ -14,11 +14,7 @@ FetchContent_Declare(
 )
 
 # Ensure that FetchContent is available
-FetchContent_GetProperties(libarchive)
-if(NOT libarchive_POPULATED)
-  FetchContent_Populate(libarchive)
-  add_subdirectory(${libarchive_SOURCE_DIR} ${libarchive_BINARY_DIR})
-endif()
+FetchContent_MakeAvailable(libarchive)
 
 #incude boost library
 find_package(Boost 1.70 REQUIRED COMPONENTS iostreams)
