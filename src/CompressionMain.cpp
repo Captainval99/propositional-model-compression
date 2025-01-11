@@ -183,26 +183,28 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     unsigned int propagatedDontCareVars = dontCareVars.size();
 
-    //predict assignemts for the rest of the variables
-    while (heuristic->hasNextVar()) {
-        Var nextVar = heuristic->getNextVar();
+    if (propagatedDontCareVars != 0) {
+        //predict assignemts for the rest of the variables
+        while (heuristic->hasNextVar()) {
+            Var nextVar = heuristic->getNextVar();
 
-        if (values[nextVar.id - 1] != Assignment::OPEN) {
-            continue;
+            if (values[nextVar.id - 1] != Assignment::OPEN) {
+                continue;
+            }
+
+            Assignment prediction = heuristic->getPredictedAssignment(nextVar);
+
+            if (model.count(nextVar.id)) {
+                ModelVar modelVar = model.at(nextVar.id);
+                bitvector.push_back(modelVar.assignment == prediction);
+            } else {
+                bitvector.push_back(true);
+                dontCareVars.push_back(nextVar.id);
+            }
+
         }
-
-        Assignment prediction = heuristic->getPredictedAssignment(nextVar);
-
-        if (model.count(nextVar.id)) {
-            ModelVar modelVar = model.at(nextVar.id);
-            bitvector.push_back(modelVar.assignment == prediction);
-        } else {
-            bitvector.push_back(true);
-            dontCareVars.push_back(nextVar.id);
-        }
-
     }
-
+    
     std::cout << "prediction flip: " << flipPredictionModel << std::endl; 
 
     std::vector<uint32_t> outputEncoding = BitvectorEncoding::diffEncoding(bitvector);
