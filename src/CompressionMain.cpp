@@ -184,9 +184,19 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
     unsigned int propagatedDontCareVars = dontCareVars.size();
 
     if (propagatedDontCareVars != 0) {
+        unsigned int nrPropagatedVars = nrPredictions;
+
         //predict assignemts for the rest of the variables
         while (heuristic->hasNextVar()) {
+            //only push correct predictions if all model variables are already propagated
+            if ((nrPropagatedVars - dontCareVars.size()) == model.size()) {
+                bitvector.push_back(true);
+                continue;
+            }
+
             Var nextVar = heuristic->getNextVar();
+
+            nrPropagatedVars += 1;
 
             if (values[nextVar.id - 1] != Assignment::OPEN) {
                 continue;
