@@ -5,16 +5,8 @@ project(modelCompression VERSION 1.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-
-include(FetchContent)
-FetchContent_Declare(
-    libarchive
-    GIT_REPOSITORY https://github.com/libarchive/libarchive.git
-    GIT_TAG v3.7.3
-)
-
-# Ensure that FetchContent is available
-FetchContent_MakeAvailable(libarchive)
+#include libarchive
+find_package(LibArchive REQUIRED)
 
 #incude boost library
 find_package(Boost 1.70 REQUIRED COMPONENTS iostreams)

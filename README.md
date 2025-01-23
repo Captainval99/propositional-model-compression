@@ -5,6 +5,7 @@ This repository contains algorithms to compress and decompress propositional mod
 ## Prerequisites
 Note that the code has only been testes on Linux systems.
 - Boost
+- libarchive
 - lz4
 - pkg-config
 
@@ -13,7 +14,6 @@ Note that the code has only been testes on Linux systems.
     cd build
     cmake ..
     make
-    cd ..
 
 # Usage
     ./compression path_to_formula path_to_model path_to_output_file [parameters]
