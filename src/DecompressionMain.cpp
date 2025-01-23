@@ -123,7 +123,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
     std::vector<unsigned int> trail;
     int head = 0;
 
-    while (heuristic->hasNextVar()) {
+    while (!allSatisfied) {
         //get next value from the model and assign it to the variable
         Var nextVar = heuristic->getNextVar();
 
@@ -213,9 +213,37 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
 
     std::cout << "prediction flip: " << flipPredictionModel << std::endl; 
 
-    //iterate over the propagated don't care variables and reset their assignment to don't care
-    for (uint64_t dontCareVar: compresssionDistances) {
-        values[dontCareVar - 1] = Assignment::OPEN;
+    //check if don't care variables were propagated
+    if (compresssionDistances.size() != 0) {
+        while(heuristic->hasNextVar()) {
+            Var nextVar = heuristic->getNextVar();
+
+            if (values[nextVar.id - 1] != Assignment::OPEN) {
+                continue;
+            }
+
+            Assignment predictedAssignment = heuristic->getPredictedAssignment(nextVar);
+            values[nextVar.id - 1] = predictedAssignment;
+
+            if (currentDistance == 0) {
+                if (predictedAssignment == Assignment::TRUE) {
+                    values[nextVar.id - 1] = Assignment::FALSE;
+                } else {
+                    values[nextVar.id - 1] = Assignment::TRUE;
+                }
+
+                currentDistance = compresssionDistances.front();
+                compresssionDistances.pop_front();
+            } else {
+                currentDistance -= 1;
+            }
+            
+        }
+
+        //iterate over the propagated don't care variables and reset their assignment to don't care
+        for (uint64_t dontCareVar: compresssionDistances) {
+            values[dontCareVar - 1] = Assignment::OPEN;
+        }
     }
 
 
