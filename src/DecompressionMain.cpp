@@ -214,7 +214,7 @@ DecompressionInfo decompressModel(const char* formulaFile, const char* modelFile
     std::cout << "prediction flip: " << flipPredictionModel << std::endl; 
 
     //check if don't care variables were propagated
-    if (compresssionDistances.size() != 0) {
+    if (compresssionDistances.size() != 0 || currentDistance != 0) {
         while(heuristic->hasNextVar()) {
             Var nextVar = heuristic->getNextVar();
 

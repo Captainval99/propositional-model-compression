@@ -57,3 +57,4 @@ The names of the subdirectories have to be identcal to the names of the .cnf fil
 | -grp      | Golomb-Rice compression parameter <br> (Only necessary if Golomb-Rice is selected) | Integer value, must be a power of two | 2 |
 | -p        | Prediction model inversion value  | Any positive integer value | 5 |
 | -hp       | Hybrid heuristic cutoff parameter | Any positive integer value | TODO |
+| -f        | Enable "faithful" mode            | -                          | - |

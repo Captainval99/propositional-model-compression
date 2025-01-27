@@ -17,10 +17,8 @@ namespace BitvectorEncoding {
     }
 
     std::vector<uint32_t> diffEncoding(std::vector<bool> bitvetor) {
-        //add a false to the bitvector if the last entry is true
-        if (bitvetor.back() == true) {
-            bitvetor.push_back(false);
-        }
+        //add a false to the bitvector to make it possible to differntiate between the different sectors of the compressed file
+        bitvetor.push_back(false);
 
         std::vector<uint32_t> output;
         uint32_t currentDistance = 0;

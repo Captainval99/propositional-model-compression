@@ -24,8 +24,9 @@ struct CompressionSetup
     unsigned int golombRiceParameter;
     unsigned int predictionFlip;
     unsigned int hybridHeuristicParam;
+    bool faithfulMode;
 
-    explicit CompressionSetup() : heuristic("jewa_dyn"), genericCompression("golrice"), momsParameter(10.0), golombRiceParameter(2), predictionFlip(5), hybridHeuristicParam(100) {}
+    explicit CompressionSetup() : heuristic("jewa_dyn"), genericCompression("golrice"), momsParameter(10.0), golombRiceParameter(2), predictionFlip(5), hybridHeuristicParam(100), faithfulMode(false) {}
 };
 
 
@@ -183,7 +184,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     unsigned int propagatedDontCareVars = dontCareVars.size();
 
-    if (propagatedDontCareVars != 0) {
+    if ((setup.faithfulMode && nrPredictions != model.size()) || propagatedDontCareVars != 0) {
         unsigned int nrPropagatedVars = nrPredictions;
 
         //predict assignemts for the rest of the variables
@@ -285,8 +286,6 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 int main(int argc, char** argv) {
     if (argc < 4) {
         throw std::runtime_error("Wrong number of arguments: " + std::to_string(argc - 1) + ", expected at least 3 arguments.");
-    } else if ((argc % 2) != 0) {
-        throw std::runtime_error("Wrong number of arguments.");
     }
 
     fs::path formulaPath(argv[1]);
@@ -296,7 +295,11 @@ int main(int argc, char** argv) {
     CompressionSetup setup;
 
     if (argc > 4) {
-        for (int i = 4; i < argc; i += 2) {
+        unsigned int i = 4;
+        unsigned int increase = 2;
+        while (i < argc) {
+            increase = 2;
+
             std::string argString = std::string(argv[i]);
 
             if (argString == "-h") {
@@ -311,9 +314,14 @@ int main(int argc, char** argv) {
                 setup.predictionFlip = std::stoi(argv[i + 1]);
             } else if (argString == "-hp") {
                 setup.hybridHeuristicParam = std::stoi(argv[i + 1]);
+            } else if (argString == "-f") {
+                setup.faithfulMode = true;
+                increase = 1;
             } else {
                 throw std::runtime_error("Unknown argment: " + argString);
             }
+
+            i += increase;
         }
     }
 
