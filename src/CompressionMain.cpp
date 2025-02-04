@@ -24,9 +24,9 @@ struct CompressionSetup
     unsigned int golombRiceParameter;
     unsigned int predictionFlip;
     unsigned int hybridHeuristicParam;
-    bool faithfulMode;
+    bool disableFaithfulMode;
 
-    explicit CompressionSetup() : heuristic("jewa_dyn"), genericCompression("golrice"), momsParameter(10.0), golombRiceParameter(2), predictionFlip(5), hybridHeuristicParam(100), faithfulMode(false) {}
+    explicit CompressionSetup() : heuristic("jewa_dyn"), genericCompression("golrice"), momsParameter(10.0), golombRiceParameter(2), predictionFlip(5), hybridHeuristicParam(100), disableFaithfulMode(false) {}
 };
 
 
@@ -184,7 +184,7 @@ CompressionInfo compressModel(const char* formulaFile, const char* modelFile, co
 
     unsigned int propagatedDontCareVars = dontCareVars.size();
 
-    if ((setup.faithfulMode && nrPredictions != model.size()) || propagatedDontCareVars != 0) {
+    if ((!setup.disableFaithfulMode && nrPredictions != model.size()) || propagatedDontCareVars != 0) {
         unsigned int nrPropagatedVars = nrPredictions;
 
         //predict assignemts for the rest of the variables
@@ -315,7 +315,7 @@ int main(int argc, char** argv) {
             } else if (argString == "-hp") {
                 setup.hybridHeuristicParam = std::stoi(argv[i + 1]);
             } else if (argString == "-f") {
-                setup.faithfulMode = true;
+                setup.disableFaithfulMode = true;
                 increase = 1;
             } else {
                 throw std::runtime_error("Unknown argment: " + argString);
